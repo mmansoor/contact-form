@@ -1,13 +1,3 @@
-const DEFAULT_ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co'];
-
-function parseCsv(value, fallback) {
-  const source = value || fallback.join(',');
-  return source
-    .split(',')
-    .map((part) => part.trim())
-    .filter(Boolean);
-}
-
 export function loadConfig(env = process.env) {
   return {
     port: Number(env.PORT || 8080),
@@ -16,7 +6,6 @@ export function loadConfig(env = process.env) {
     contractDocsSecret: env.CONTRACT_DOCS_SECRET || '',
     recaptchaSecret: env.RECAPTCHA_SECRET || '',
     recaptchaVerifyUrl: env.RECAPTCHA_VERIFY_URL || 'https://www.google.com/recaptcha/api/siteverify',
-    allowedBaseDomains: parseCsv(env.CONTACT_ALLOWED_BASE_DOMAINS, DEFAULT_ALLOWED_BASE_DOMAINS),
     awsRegion: env.AWS_REGION || 'us-east-1',
     awsAccessKeyId: env.AWS_ACCESS_KEY_ID || '',
     awsSecretAccessKey: env.AWS_SECRET_ACCESS_KEY || '',

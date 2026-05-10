@@ -169,6 +169,22 @@ test('allows configured HTTPS origins and blocks others', async () => {
   assert.equal(blocked.statusCode, 403);
 });
 
+test('allows cloudvantage apex and subdomain origins', async () => {
+  const { app } = buildApp();
+
+  const apex = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://cloudvantage.co'
+  });
+  assert.equal(apex.statusCode, 200);
+  assert.equal(apex.headers['access-control-allow-origin'], 'https://cloudvantage.co');
+
+  const subdomain = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://www.cloudvantage.co'
+  });
+  assert.equal(subdomain.statusCode, 200);
+  assert.equal(subdomain.headers['access-control-allow-origin'], 'https://www.cloudvantage.co');
+});
+
 test('validates required fields and email syntax', async () => {
   const { app } = buildApp();
 

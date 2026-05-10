@@ -128,7 +128,6 @@ Optional behavior overrides:
 
 - `PORT`
 - `RECAPTCHA_VERIFY_URL`
-- `CONTACT_ALLOWED_BASE_DOMAINS`
 - `SERVICE_BASE_URL`
 
 ## High-risk changes
