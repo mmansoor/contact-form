@@ -25,7 +25,7 @@ function createLogger() {
 function buildEnv() {
   return {
     CONTACT_API_SECRET: 'shared-secret',
-    CONTACT_DOCS_SECRET: 'docs-secret',
+    CONTRACT_DOCS_SECRET: 'docs-secret',
     RECAPTCHA_SECRET: 'recaptcha-secret',
     AWS_REGION: 'us-east-1',
     AWS_ACCESS_KEY_ID: 'key',
@@ -84,6 +84,13 @@ test('healthz returns 200', async () => {
   const response = await inject(app, { method: 'GET', url: '/healthz' });
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), { ok: true });
+});
+
+test('root returns the site names', async () => {
+  const { app } = buildApp();
+  const response = await inject(app, { method: 'GET', url: '/' });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.body, 'CloudVantage.co wwt.co');
 });
 
 test('secret API route is required', async () => {
