@@ -199,6 +199,17 @@ test('returns success payload and sends both emails sequentially', async () => {
   assert.equal(response.headers['access-control-allow-origin'], 'https://wwt.co');
 });
 
+test('allows localhost origins for local browser testing', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'http://localhost:3000'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['access-control-allow-origin'], 'http://localhost:3000');
+  assert.equal(sentEmails.length, 2);
+});
+
 test('supports multipart form-data submissions', async () => {
   const { app } = buildApp();
   const boundary = '----contact-form-boundary';

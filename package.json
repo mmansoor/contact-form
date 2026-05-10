@@ -8,11 +8,12 @@
   },
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "dev": "node --env-file-if-exists=.env.local --watch src/server.js",
     "lint": "node --check src/*.js src/**/*.js test/*.js scripts/*.js",
     "test": "node --test",
     "validate:openapi": "node scripts/validate-openapi.js",
     "validate:templates": "node scripts/validate-ses-templates.js",
+    "sync:iam-policy": "bash scripts/sync-iam-policy.sh",
     "validate": "npm run lint && npm run validate:openapi && npm run validate:templates && npm test",
     "sync:ses-templates": "node scripts/sync-ses-templates.js"
   },
