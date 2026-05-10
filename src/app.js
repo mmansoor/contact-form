@@ -9,6 +9,16 @@ const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function firstHeaderValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  return String(value)
+    .split(',')[0]
+    .trim();
+}
+
 function isValidEmail(email) {
   return EMAIL_PATTERN.test(email);
 }
@@ -61,6 +71,32 @@ function isAllowedOrigin(originValue, allowedBaseDomains) {
   }
 
   return false;
+}
+
+function getRequestBaseUrl(req) {
+  const protocol = firstHeaderValue(req.headers['x-forwarded-proto']) || req.protocol || 'http';
+  const host = firstHeaderValue(req.headers['x-forwarded-host']) || req.headers.host || '';
+
+  if (!host) {
+    return '';
+  }
+
+  return `${protocol}://${host}`;
+}
+
+function withRuntimeOpenApiServer(rawSpec, baseUrl) {
+  if (!baseUrl) {
+    return rawSpec;
+  }
+
+  const serverBlock = `servers:\n  - url: ${baseUrl}\n`;
+  const replaced = rawSpec.replace(/servers:\n(?:  - url: .*\n)+/, serverBlock);
+
+  if (replaced !== rawSpec) {
+    return replaced;
+  }
+
+  return rawSpec.replace(/(info:\n(?:  .*\n)+)/, `$1${serverBlock}`);
 }
 
 function logEvent(logger, level, event, fields = {}) {
@@ -218,7 +254,8 @@ export function createApp({
     const suffix = req.path.slice(expectedDocsPrefix.length);
     if (suffix === '/openapi.yaml') {
       const rawSpec = await readFile(openApiPath, 'utf8');
-      return res.type('application/yaml').send(rawSpec);
+      const runtimeSpec = withRuntimeOpenApiServer(rawSpec, getRequestBaseUrl(req));
+      return res.type('application/yaml').send(runtimeSpec);
     }
 
     if (suffix === '/docs') {

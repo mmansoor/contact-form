@@ -107,6 +107,36 @@ test('protected docs route is required', async () => {
   assert.equal(response.statusCode, 404);
 });
 
+test('protected OpenAPI spec uses localhost when served locally', async () => {
+  const { app } = buildApp();
+  const response = await inject(app, {
+    method: 'GET',
+    url: '/contracts/docs-secret/openapi.yaml',
+    headers: {
+      host: 'localhost:8080'
+    }
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /servers:\n  - url: http:\/\/localhost:8080\n/);
+});
+
+test('protected OpenAPI spec uses forwarded Cloud Run host', async () => {
+  const { app } = buildApp();
+  const response = await inject(app, {
+    method: 'GET',
+    url: '/contracts/docs-secret/openapi.yaml',
+    headers: {
+      host: 'internal-host',
+      'x-forwarded-proto': 'https',
+      'x-forwarded-host': 'contact-form.wwt.co'
+    }
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /servers:\n  - url: https:\/\/contact-form\.wwt\.co\n/);
+});
+
 test('allows configured HTTPS origins and blocks others', async () => {
   const { app } = buildApp();
   const allowed = await inject(app, {
