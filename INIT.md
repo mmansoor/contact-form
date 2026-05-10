@@ -100,7 +100,7 @@ Application logs are structured JSON. Preserve stable `event` names when possibl
 Required secrets:
 
 - `CONTACT_API_SECRET`
-- `CONTRACT_DOCS_SECRET`
+- `CONTACT_DOCS_SECRET`
 - `RECAPTCHA_SECRET`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`

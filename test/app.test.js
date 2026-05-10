@@ -25,7 +25,7 @@ function createLogger() {
 function buildEnv() {
   return {
     CONTACT_API_SECRET: 'shared-secret',
-    CONTRACT_DOCS_SECRET: 'docs-secret',
+    CONTACT_DOCS_SECRET: 'docs-secret',
     RECAPTCHA_SECRET: 'recaptcha-secret',
     AWS_REGION: 'us-east-1',
     AWS_ACCESS_KEY_ID: 'key',

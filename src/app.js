@@ -202,8 +202,8 @@ export function createApp({
   });
 
   app.use('/contracts', async (req, res) => {
-    const expectedDocsPrefix = `/${config.contractDocsSecret}`;
-    if (!config.contractDocsSecret || !req.path.startsWith(expectedDocsPrefix)) {
+    const expectedDocsPrefix = `/${config.contactDocsSecret}`;
+    if (!config.contactDocsSecret || !req.path.startsWith(expectedDocsPrefix)) {
       logEvent(logger, 'warn', 'contracts_secret_mismatch', {
         path: req.originalUrl,
         origin: req.headers.origin || null
