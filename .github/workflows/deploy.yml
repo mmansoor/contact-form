@@ -10,6 +10,31 @@ permissions:
   id-token: write
 
 jobs:
+  detect_source_changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src_changed: ${{ steps.detect.outputs.src_changed }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect source changes
+        id: detect
+        run: |
+          if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+            echo "src_changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" | grep -q '^src/'; then
+            echo "src_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "src_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
   validate:
     runs-on: ubuntu-latest
 
@@ -31,7 +56,9 @@ jobs:
 
   sync_aws_artifacts:
     runs-on: ubuntu-latest
-    needs: validate
+    needs:
+      - detect_source_changes
+      - validate
     env:
       AWS_REGION: us-east-1
       AWS_RUNTIME_POLICY_ARN: arn:aws:iam::268987466139:policy/ContactFormRuntimePolicy
@@ -65,8 +92,10 @@ jobs:
   deploy_cloud_run:
     runs-on: ubuntu-latest
     needs:
+      - detect_source_changes
       - validate
       - sync_aws_artifacts
+    if: needs.detect_source_changes.outputs.src_changed == 'true'
     env:
       AWS_REGION: us-east-1
       CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
@@ -105,7 +134,7 @@ jobs:
             BRAND_TEAM_NAME=${{ vars.BRAND_TEAM_NAME }}
             BRAND_PRIVACY_URL=${{ vars.BRAND_PRIVACY_URL }}
             BRAND_TERMS_URL=${{ vars.BRAND_TERMS_URL }}
-            CONTACT_ALLOWED_BASE_DOMAINS=${{ vars.CONTACT_ALLOWED_BASE_DOMAINS }}
+            CONTACT_ALLOWED_BASE_DOMAINS="${{ vars.CONTACT_ALLOWED_BASE_DOMAINS }}"
             SERVICE_BASE_URL=${{ vars.SERVICE_BASE_URL }}
           secrets: |-
             CONTACT_API_SECRET=CONTACT_API_SECRET:latest
