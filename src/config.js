@@ -13,7 +13,7 @@ export function loadConfig(env = process.env) {
     port: Number(env.PORT || 8080),
     serviceBaseUrl: env.SERVICE_BASE_URL || '',
     contactApiSecret: env.CONTACT_API_SECRET || '',
-    contractDocsSecret: env.CONTRACT_DOCS_SECRET || '',
+    contactDocsSecret: env.CONTACT_DOCS_SECRET || '',
     recaptchaSecret: env.RECAPTCHA_SECRET || '',
     recaptchaVerifyUrl: env.RECAPTCHA_VERIFY_URL || 'https://www.google.com/recaptcha/api/siteverify',
     allowedBaseDomains: parseCsv(env.CONTACT_ALLOWED_BASE_DOMAINS, DEFAULT_ALLOWED_BASE_DOMAINS),
