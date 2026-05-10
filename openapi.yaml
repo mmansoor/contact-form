@@ -1,0 +1,141 @@
+openapi: 3.0.3
+info:
+  title: contact-form API
+  version: 1.0.0
+  description: Shared contact form backend for wwt.co and cloudvantage.co.
+servers:
+  - url: https://contact-form.example.com
+paths:
+  /api/contact/{contactSecret}:
+    options:
+      summary: CORS preflight for the protected contact endpoint
+      parameters:
+        - $ref: '#/components/parameters/ContactSecret'
+      responses:
+        '204':
+          description: Preflight accepted.
+        '403':
+          description: Origin is not allowed.
+    post:
+      summary: Submit a contact form
+      parameters:
+        - $ref: '#/components/parameters/ContactSecret'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactForm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ContactForm'
+      responses:
+        '200':
+          description: Form accepted and both emails were sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+              examples:
+                success:
+                  value:
+                    result: true
+                    message: Thanks. Your message has been sent successfully.
+        '400':
+          description: Validation or reCAPTCHA failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Browser origin is not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Secret route mismatch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '405':
+          description: Method not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '415':
+          description: Unsupported content type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '500':
+          description: Server configuration failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '502':
+          description: reCAPTCHA transport failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '503':
+          description: SES delivery failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+components:
+  parameters:
+    ContactSecret:
+      name: contactSecret
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Shared protected integration path segment.
+  schemas:
+    ContactForm:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - email
+        - message
+        - g-recaptcha-response
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        company:
+          type: string
+        inquiry_type:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+          minLength: 1
+        g-recaptcha-response:
+          type: string
+          minLength: 1
+    ContactResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - result
+        - message
+      properties:
+        result:
+          type: boolean
+        message:
+          type: string

@@ -1,0 +1,82 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - deployment
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: us-east-1
+      AWS_RUNTIME_POLICY_ARN: arn:aws:iam::268987466139:policy/ContactFormRuntimePolicy
+      CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+      CLOUD_RUN_REGION: ${{ vars.CLOUD_RUN_REGION }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run validate
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::268987466139:role/contact-form-deployment-role
+          role-session-name: github-actions-contact-form-deploy
+
+      - name: Sync runtime IAM policy
+        run: npm run sync:iam-policy -- "$AWS_RUNTIME_POLICY_ARN" infra/iam/contact-form-runtime-policy.json
+
+      - name: Sync SES templates
+        run: npm run sync:ses-templates
+
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - id: deploy
+        uses: google-github-actions/deploy-cloudrun@v3
+        with:
+          service: ${{ env.CLOUD_RUN_SERVICE }}
+          region: ${{ env.CLOUD_RUN_REGION }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          source: .
+          env_vars: |-
+            AWS_REGION=${{ env.AWS_REGION }}
+            CONTACT_FROM_EMAIL=${{ vars.CONTACT_FROM_EMAIL }}
+            CONTACT_TO_EMAIL=${{ vars.CONTACT_TO_EMAIL }}
+            SES_ADMIN_TEMPLATE=${{ vars.SES_ADMIN_TEMPLATE }}
+            SES_CONFIRMATION_TEMPLATE=${{ vars.SES_CONFIRMATION_TEMPLATE }}
+            BRAND_COMPANY_NAME=${{ vars.BRAND_COMPANY_NAME }}
+            BRAND_SITE_NAME=${{ vars.BRAND_SITE_NAME }}
+            BRAND_DOMAIN=${{ vars.BRAND_DOMAIN }}
+            BRAND_URL=${{ vars.BRAND_URL }}
+            BRAND_SUPPORT_EMAIL=${{ vars.BRAND_SUPPORT_EMAIL }}
+            BRAND_TEAM_NAME=${{ vars.BRAND_TEAM_NAME }}
+            BRAND_PRIVACY_URL=${{ vars.BRAND_PRIVACY_URL }}
+            BRAND_TERMS_URL=${{ vars.BRAND_TERMS_URL }}
+            CONTACT_ALLOWED_BASE_DOMAINS=${{ vars.CONTACT_ALLOWED_BASE_DOMAINS }}
+            SERVICE_BASE_URL=${{ vars.SERVICE_BASE_URL }}
+          secrets: |-
+            CONTACT_API_SECRET=CONTACT_API_SECRET:latest
+            CONTRACT_DOCS_SECRET=CONTRACT_DOCS_SECRET:latest
+            RECAPTCHA_SECRET=RECAPTCHA_SECRET:latest
+            AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest
+            AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY:latest
+
+      - name: Show deployed URL
+        run: echo "${{ steps.deploy.outputs.url }}"

@@ -1,0 +1,21 @@
+{
+  "displayName": "contact-form healthz",
+  "monitoredResource": {
+    "type": "uptime_url",
+    "labels": {
+      "host": "${SERVICE_HOST}",
+      "project_id": "${PROJECT_ID}"
+    }
+  },
+  "httpCheck": {
+    "path": "/healthz",
+    "port": 443,
+    "useSsl": true,
+    "validateSsl": true
+  },
+  "period": "60s",
+  "timeout": "10s",
+  "selectedRegions": [
+    "USA"
+  ]
+}

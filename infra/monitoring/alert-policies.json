@@ -1,0 +1,100 @@
+{
+  "policies": [
+    {
+      "displayName": "contact-form any 5xx",
+      "combiner": "OR",
+      "conditions": [
+        {
+          "displayName": "Cloud Run 5xx responses",
+          "conditionThreshold": {
+            "filter": "resource.type=\"cloud_run_revision\" AND resource.labels.service_name=\"${SERVICE_NAME}\" AND metric.type=\"run.googleapis.com/request_count\" AND metric.labels.response_code_class=\"5xx\"",
+            "comparison": "COMPARISON_GT",
+            "thresholdValue": 0,
+            "duration": "0s",
+            "aggregations": [
+              {
+                "alignmentPeriod": "300s",
+                "perSeriesAligner": "ALIGN_DELTA"
+              }
+            ]
+          }
+        }
+      ],
+      "notificationChannels": [
+        "${OPS_EMAIL_CHANNEL_ID}"
+      ]
+    },
+    {
+      "displayName": "contact-form repeated SES failures",
+      "combiner": "OR",
+      "conditions": [
+        {
+          "displayName": "SES delivery failure count",
+          "conditionThreshold": {
+            "filter": "metric.type=\"logging.googleapis.com/user/contact_form_ses_delivery_failure_count\"",
+            "comparison": "COMPARISON_GT",
+            "thresholdValue": 2,
+            "duration": "300s",
+            "aggregations": [
+              {
+                "alignmentPeriod": "300s",
+                "perSeriesAligner": "ALIGN_DELTA"
+              }
+            ]
+          }
+        }
+      ],
+      "notificationChannels": [
+        "${OPS_EMAIL_CHANNEL_ID}"
+      ]
+    },
+    {
+      "displayName": "contact-form repeated reCAPTCHA transport failures",
+      "combiner": "OR",
+      "conditions": [
+        {
+          "displayName": "reCAPTCHA transport failure count",
+          "conditionThreshold": {
+            "filter": "metric.type=\"logging.googleapis.com/user/contact_form_recaptcha_transport_failure_count\"",
+            "comparison": "COMPARISON_GT",
+            "thresholdValue": 2,
+            "duration": "300s",
+            "aggregations": [
+              {
+                "alignmentPeriod": "300s",
+                "perSeriesAligner": "ALIGN_DELTA"
+              }
+            ]
+          }
+        }
+      ],
+      "notificationChannels": [
+        "${OPS_EMAIL_CHANNEL_ID}"
+      ]
+    },
+    {
+      "displayName": "contact-form uptime failure",
+      "combiner": "OR",
+      "conditions": [
+        {
+          "displayName": "healthz uptime failed",
+          "conditionThreshold": {
+            "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND metric.labels.check_id=\"${UPTIME_CHECK_ID}\"",
+            "comparison": "COMPARISON_LT",
+            "thresholdValue": 1,
+            "duration": "300s",
+            "aggregations": [
+              {
+                "alignmentPeriod": "300s",
+                "perSeriesAligner": "ALIGN_MEAN"
+              }
+            ]
+          }
+        }
+      ],
+      "notificationChannels": [
+        "${OPS_EMAIL_CHANNEL_ID}"
+      ]
+    }
+  ]
+}

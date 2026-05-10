@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowSesTemplateSync",
+      "Effect": "Allow",
+      "Action": [
+        "ses:GetEmailTemplate",
+        "ses:CreateEmailTemplate",
+        "ses:UpdateEmailTemplate"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowRuntimePolicyManagement",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion",
+        "iam:ListPolicyVersions",
+        "iam:CreatePolicyVersion",
+        "iam:SetDefaultPolicyVersion",
+        "iam:DeletePolicyVersion"
+      ],
+      "Resource": "arn:aws:iam::268987466139:policy/ContactFormRuntimePolicy"
+    }
+  ]
+}
