@@ -1,0 +1,28 @@
+{
+  "name": "contact-form",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "lint": "node --check src/*.js src/**/*.js test/*.js scripts/*.js",
+    "test": "node --test",
+    "validate:openapi": "node scripts/validate-openapi.js",
+    "validate:templates": "node scripts/validate-ses-templates.js",
+    "validate": "npm run lint && npm run validate:openapi && npm run validate:templates && npm test",
+    "sync:ses-templates": "node scripts/sync-ses-templates.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.921.0",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "@apidevtools/swagger-parser": "^12.1.0",
+    "light-my-request": "^6.6.0"
+  }
+}
