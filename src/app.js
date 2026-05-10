@@ -8,6 +8,7 @@ import { loadConfig } from './config.js';
 const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co'];
 
 function firstHeaderValue(value) {
   if (!value) {
@@ -40,7 +41,7 @@ function buildCorsHeaders(origin) {
   };
 }
 
-function isAllowedOrigin(originValue, allowedBaseDomains) {
+function isAllowedOrigin(originValue) {
   if (!originValue) {
     return null;
   }
@@ -64,7 +65,7 @@ function isAllowedOrigin(originValue, allowedBaseDomains) {
     return false;
   }
 
-  for (const domain of allowedBaseDomains) {
+  for (const domain of ALLOWED_BASE_DOMAINS) {
     if (origin.hostname === domain || origin.hostname.endsWith(`.${domain}`)) {
       return origin.origin;
     }
@@ -299,7 +300,7 @@ export function createApp({
       return jsonResponse(res, 404, { result: false, message: 'Not found.' });
     }
 
-    const corsOrigin = isAllowedOrigin(req.headers.origin, config.allowedBaseDomains);
+    const corsOrigin = isAllowedOrigin(req.headers.origin);
     if (req.method === 'OPTIONS') {
       if (corsOrigin === false) {
         return res.status(403).end();

@@ -105,7 +105,6 @@ jobs:
             BRAND_TEAM_NAME=${{ vars.BRAND_TEAM_NAME }}
             BRAND_PRIVACY_URL=${{ vars.BRAND_PRIVACY_URL }}
             BRAND_TERMS_URL=${{ vars.BRAND_TERMS_URL }}
-            CONTACT_ALLOWED_BASE_DOMAINS="${{ vars.CONTACT_ALLOWED_BASE_DOMAINS }}"
             SERVICE_BASE_URL=${{ vars.SERVICE_BASE_URL }}
           secrets: |-
             CONTACT_API_SECRET=CONTACT_API_SECRET:latest
