@@ -101,6 +101,20 @@ test('secret API route is required', async () => {
   assert.match(logger.messages.find((entry) => entry.event === 'contact_secret_mismatch').event, /contact_secret_mismatch/);
 });
 
+test('GET on the secret contact route returns endpoint guidance', async () => {
+  const { app } = buildApp();
+  const response = await inject(app, {
+    method: 'GET',
+    url: '/api/contact/shared-secret'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(JSON.parse(response.body), {
+    result: true,
+    message: 'Contact form endpoint. Submit this route with POST.'
+  });
+});
+
 test('protected docs route is required', async () => {
   const { app } = buildApp();
   const response = await inject(app, { method: 'GET', url: '/contracts/openapi.yaml' });

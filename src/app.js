@@ -317,6 +317,13 @@ export function createApp({
 
     res.set(buildCorsHeaders(corsOrigin));
 
+    if (req.method === 'GET') {
+      return jsonResponse(res, 200, {
+        result: true,
+        message: 'Contact form endpoint. Submit this route with POST.'
+      });
+    }
+
     if (req.method !== 'POST') {
       return jsonResponse(res, 405, { result: false, message: 'Method not allowed.' });
     }
