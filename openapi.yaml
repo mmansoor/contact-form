@@ -16,6 +16,34 @@ paths:
           description: Preflight accepted.
         '403':
           description: Origin is not allowed.
+    get:
+      summary: Describe how to use the protected contact endpoint
+      parameters:
+        - $ref: '#/components/parameters/ContactSecret'
+      responses:
+        '200':
+          description: Endpoint metadata for human callers.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+              examples:
+                info:
+                  value:
+                    result: true
+                    message: Contact form endpoint. Submit this route with POST.
+        '403':
+          description: Browser origin is not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '404':
+          description: Secret route mismatch.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
     post:
       summary: Submit a contact form
       parameters:
