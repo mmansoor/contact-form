@@ -15,7 +15,7 @@ Local development loads `.env.local` automatically when you use `npm run dev`.
 Required environment variables:
 
 - `CONTACT_API_SECRET`
-- `CONTACT_DOCS_SECRET`
+- `CONTRACT_DOCS_SECRET`
 - `RECAPTCHA_SECRET`
 - `AWS_REGION`
 - `AWS_ACCESS_KEY_ID`
@@ -49,7 +49,7 @@ Cloud Run should provide the same environment variable names the app already exp
 Sensitive values should be injected as secret-backed environment variables:
 
 - `CONTACT_API_SECRET`
-- `CONTACT_DOCS_SECRET`
+- `CONTRACT_DOCS_SECRET`
 - `RECAPTCHA_SECRET`
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
