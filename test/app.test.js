@@ -185,6 +185,22 @@ test('allows cloudvantage apex and subdomain origins', async () => {
   assert.equal(subdomain.headers['access-control-allow-origin'], 'https://www.cloudvantage.co');
 });
 
+test('allows webwiretech apex and subdomain origins', async () => {
+  const { app } = buildApp();
+
+  const apex = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://webwiretech.com'
+  });
+  assert.equal(apex.statusCode, 200);
+  assert.equal(apex.headers['access-control-allow-origin'], 'https://webwiretech.com');
+
+  const subdomain = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://www.webwiretech.com'
+  });
+  assert.equal(subdomain.statusCode, 200);
+  assert.equal(subdomain.headers['access-control-allow-origin'], 'https://www.webwiretech.com');
+});
+
 test('validates required fields and email syntax', async () => {
   const { app } = buildApp();
 
@@ -264,6 +280,45 @@ test('returns success payload and sends both emails sequentially', async () => {
   assert.equal(sentEmails[0].toEmail, 'info@wwt.co');
   assert.equal(sentEmails[1].toEmail, 'jane@example.com');
   assert.equal(response.headers['access-control-allow-origin'], 'https://wwt.co');
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
+  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
+  assert.equal(sentEmails[0].templateData.brand_url, 'https://wwt.co');
+});
+
+test('uses CloudVantage branding for cloudvantage requests', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://cloudvantage.co'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'CloudVantage');
+  assert.equal(sentEmails[0].templateData.brand_site_name, 'CloudVantage');
+  assert.equal(sentEmails[0].templateData.brand_domain, 'cloudvantage.co');
+  assert.equal(sentEmails[0].templateData.brand_url, 'https://cloudvantage.co');
+  assert.equal(sentEmails[0].templateData.brand_support_email, 'info@cloudvantage.co');
+});
+
+test('uses Web Wire Tech branding for webwiretech requests', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://webwiretech.com'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
+  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
+  assert.equal(sentEmails[0].templateData.brand_domain, 'wwt.co');
+  assert.equal(sentEmails[0].templateData.brand_url, 'https://wwt.co');
+});
+
+test('defaults missing-origin branding to Web Wire Tech', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody);
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
+  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
 });
 
 test('allows localhost origins for local browser testing', async () => {
