@@ -8,7 +8,29 @@ import { loadConfig } from './config.js';
 const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co'];
+const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co', 'webwiretech.com'];
+const BRAND_PROFILES = {
+  cloudvantage: {
+    companyName: 'CloudVantage',
+    siteName: 'CloudVantage',
+    domain: 'cloudvantage.co',
+    url: 'https://cloudvantage.co',
+    supportEmail: 'info@cloudvantage.co',
+    teamName: 'CloudVantage Team',
+    privacyUrl: 'https://cloudvantage.co/privacy',
+    termsUrl: 'https://cloudvantage.co/terms'
+  },
+  webWireTech: {
+    companyName: 'Web Wire Technologies',
+    siteName: 'Web Wire Tech',
+    domain: 'wwt.co',
+    url: 'https://wwt.co',
+    supportEmail: 'info@wwt.co',
+    teamName: 'Web Wire Tech Team',
+    privacyUrl: 'https://wwt.co/privacy',
+    termsUrl: 'https://wwt.co/terms'
+  }
+};
 
 function firstHeaderValue(value) {
   if (!value) {
@@ -123,7 +145,35 @@ function createSesClient(config) {
   });
 }
 
+function getBrandProfileForHostname(hostname, config) {
+  if (hostname === 'cloudvantage.co' || hostname.endsWith('.cloudvantage.co')) {
+    return BRAND_PROFILES.cloudvantage;
+  }
+
+  if (
+    hostname === 'wwt.co' ||
+    hostname.endsWith('.wwt.co') ||
+    hostname === 'webwiretech.com' ||
+    hostname.endsWith('.webwiretech.com')
+  ) {
+    return BRAND_PROFILES.webWireTech;
+  }
+
+  return {
+    companyName: config.brandCompanyName || BRAND_PROFILES.webWireTech.companyName,
+    siteName: config.brandSiteName || BRAND_PROFILES.webWireTech.siteName,
+    domain: config.brandDomain || BRAND_PROFILES.webWireTech.domain,
+    url: config.brandUrl || BRAND_PROFILES.webWireTech.url,
+    supportEmail: config.brandSupportEmail || BRAND_PROFILES.webWireTech.supportEmail,
+    teamName: config.brandTeamName || BRAND_PROFILES.webWireTech.teamName,
+    privacyUrl: config.brandPrivacyUrl || BRAND_PROFILES.webWireTech.privacyUrl,
+    termsUrl: config.brandTermsUrl || BRAND_PROFILES.webWireTech.termsUrl
+  };
+}
+
 function buildContactTemplateData(config, payload) {
+  const brand = getBrandProfileForHostname(payload.sourceDomain, config);
+
   return {
     name: payload.name,
     email: payload.email,
@@ -137,14 +187,14 @@ function buildContactTemplateData(config, payload) {
     admin_email: config.contactToEmail,
     source_domain: payload.sourceDomain,
     timestamp: payload.timestamp,
-    brand_company_name: config.brandCompanyName || '',
-    brand_site_name: config.brandSiteName || '',
-    brand_domain: config.brandDomain || '',
-    brand_url: config.brandUrl || '',
-    brand_support_email: config.brandSupportEmail || '',
-    brand_team_name: config.brandTeamName || '',
-    brand_privacy_url: config.brandPrivacyUrl || '',
-    brand_terms_url: config.brandTermsUrl || ''
+    brand_company_name: brand.companyName,
+    brand_site_name: brand.siteName,
+    brand_domain: brand.domain,
+    brand_url: brand.url,
+    brand_support_email: brand.supportEmail,
+    brand_team_name: brand.teamName,
+    brand_privacy_url: brand.privacyUrl,
+    brand_terms_url: brand.termsUrl
   };
 }
 
@@ -194,6 +244,10 @@ async function defaultSendTemplatedEmail({ client, config, toEmail, replyToAddre
 function formParser(req, res, next) {
   const contentType = req.headers['content-type'] || '';
 
+  if (contentType.includes('application/json')) {
+    return express.json({ limit: '100kb' })(req, res, next);
+  }
+
   if (contentType.includes('multipart/form-data')) {
     return upload.none()(req, res, next);
   }
@@ -238,7 +292,7 @@ export function createApp({
     res.type('text/plain').send('CloudVantage.co wwt.co');
   });
 
-  app.get('/healthz', (req, res) => {
+  app.get(['/healthz', '/healthz/'], (req, res) => {
     res.status(200).json({ ok: true });
   });
 
@@ -331,6 +385,7 @@ export function createApp({
 
     const contentType = req.headers['content-type'] || '';
     if (
+      !contentType.includes('application/json') &&
       !contentType.includes('application/x-www-form-urlencoded') &&
       !contentType.includes('multipart/form-data')
     ) {

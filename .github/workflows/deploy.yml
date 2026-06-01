@@ -1,6 +1,7 @@
 name: Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - deployment
@@ -72,6 +73,7 @@ jobs:
       CLOUD_RUN_SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
       CLOUD_RUN_REGION: ${{ vars.CLOUD_RUN_REGION }}
       GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT: ${{ vars.CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT }}
 
     steps:
       - name: Check out repository
@@ -91,6 +93,8 @@ jobs:
           region: ${{ env.CLOUD_RUN_REGION }}
           project_id: ${{ env.GCP_PROJECT_ID }}
           source: .
+          flags: |-
+            --service-account=${{ env.CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT }}
           env_vars: |-
             AWS_REGION=${{ env.AWS_REGION }}
             CONTACT_FROM_EMAIL=${{ vars.CONTACT_FROM_EMAIL }}

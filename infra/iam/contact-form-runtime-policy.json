@@ -6,6 +6,7 @@
       "Effect": "Allow",
       "Action": [
         "ses:SendEmail",
+        "ses:SendTemplatedEmail",
         "ses:SendRawEmail"
       ],
       "Resource": "*"
