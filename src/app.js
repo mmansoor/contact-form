@@ -244,6 +244,10 @@ async function defaultSendTemplatedEmail({ client, config, toEmail, replyToAddre
 function formParser(req, res, next) {
   const contentType = req.headers['content-type'] || '';
 
+  if (contentType.includes('application/json')) {
+    return express.json({ limit: '100kb' })(req, res, next);
+  }
+
   if (contentType.includes('multipart/form-data')) {
     return upload.none()(req, res, next);
   }
@@ -288,7 +292,7 @@ export function createApp({
     res.type('text/plain').send('CloudVantage.co wwt.co');
   });
 
-  app.get('/healthz', (req, res) => {
+  app.get(['/healthz', '/healthz/'], (req, res) => {
     res.status(200).json({ ok: true });
   });
 
@@ -381,6 +385,7 @@ export function createApp({
 
     const contentType = req.headers['content-type'] || '';
     if (
+      !contentType.includes('application/json') &&
       !contentType.includes('application/x-www-form-urlencoded') &&
       !contentType.includes('multipart/form-data')
     ) {

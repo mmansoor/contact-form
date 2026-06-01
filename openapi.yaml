@@ -51,6 +51,9 @@ paths:
       requestBody:
         required: true
         content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactForm'
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ContactForm'

@@ -79,6 +79,18 @@ async function sendForm(app, method, url, body, headers = {}) {
   });
 }
 
+async function sendJson(app, method, url, body, headers = {}) {
+  return inject(app, {
+    method,
+    url,
+    payload: JSON.stringify(body),
+    headers: {
+      'content-type': 'application/json',
+      ...headers
+    }
+  });
+}
+
 test('healthz returns 200', async () => {
   const { app } = buildApp();
   const response = await inject(app, { method: 'GET', url: '/healthz' });
@@ -364,4 +376,16 @@ test('supports multipart form-data submissions', async () => {
     }
   });
   assert.equal(response.statusCode, 200);
+});
+
+test('supports JSON submissions', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendJson(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://wwt.co'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['access-control-allow-origin'], 'https://wwt.co');
+  assert.equal(sentEmails.length, 2);
+  assert.equal(sentEmails[0].templateData.email, 'jane@example.com');
 });
