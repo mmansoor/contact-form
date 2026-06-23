@@ -130,6 +130,12 @@ Optional behavior overrides:
 - `RECAPTCHA_VERIFY_URL`
 - `SERVICE_BASE_URL`
 
+Optional per-tenant admin recipients (override `CONTACT_TO_EMAIL` for the matching origin; fall back to `CONTACT_TO_EMAIL` when unset):
+
+- `CONTACT_TO_EMAIL_DONORNODE`
+- `CONTACT_TO_EMAIL_CLOUDVANTAGE`
+- `CONTACT_TO_EMAIL_WWT`
+
 ## High-risk changes
 
 Do not casually change:

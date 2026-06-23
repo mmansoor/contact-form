@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: contact-form API
   version: 1.0.0
-  description: Shared contact form backend for wwt.co and cloudvantage.co.
+  description: Shared contact form backend for wwt.co, cloudvantage.co, and donornode.cloud. Allowed browser origins include https://donornode.cloud and its HTTPS subdomains.
 servers:
   - url: https://contact-form.example.com
 paths:

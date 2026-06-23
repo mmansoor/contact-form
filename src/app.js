@@ -8,7 +8,7 @@ import { loadConfig } from './config.js';
 const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co', 'webwiretech.com'];
+const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co', 'webwiretech.com', 'donornode.cloud'];
 const BRAND_PROFILES = {
   cloudvantage: {
     companyName: 'CloudVantage',
@@ -29,6 +29,16 @@ const BRAND_PROFILES = {
     teamName: 'Web Wire Tech Team',
     privacyUrl: 'https://wwt.co/privacy',
     termsUrl: 'https://wwt.co/terms'
+  },
+  donorNode: {
+    companyName: 'DonorNode',
+    siteName: 'DonorNode',
+    domain: 'donornode.cloud',
+    url: 'https://donornode.cloud',
+    supportEmail: 'info@donornode.cloud',
+    teamName: 'DonorNode Team',
+    privacyUrl: 'https://donornode.cloud/privacy',
+    termsUrl: 'https://donornode.cloud/terms'
   }
 };
 
@@ -63,7 +73,7 @@ function buildCorsHeaders(origin) {
   };
 }
 
-function isAllowedOrigin(originValue) {
+export function isAllowedOrigin(originValue) {
   if (!originValue) {
     return null;
   }
@@ -146,6 +156,10 @@ function createSesClient(config) {
 }
 
 function getBrandProfileForHostname(hostname, config) {
+  if (hostname === 'donornode.cloud' || hostname.endsWith('.donornode.cloud')) {
+    return BRAND_PROFILES.donorNode;
+  }
+
   if (hostname === 'cloudvantage.co' || hostname.endsWith('.cloudvantage.co')) {
     return BRAND_PROFILES.cloudvantage;
   }
@@ -171,6 +185,27 @@ function getBrandProfileForHostname(hostname, config) {
   };
 }
 
+function getAdminRecipientForHostname(hostname, config) {
+  if (hostname === 'donornode.cloud' || hostname.endsWith('.donornode.cloud')) {
+    return config.contactToEmailDonorNode || config.contactToEmail;
+  }
+
+  if (hostname === 'cloudvantage.co' || hostname.endsWith('.cloudvantage.co')) {
+    return config.contactToEmailCloudvantage || config.contactToEmail;
+  }
+
+  if (
+    hostname === 'wwt.co' ||
+    hostname.endsWith('.wwt.co') ||
+    hostname === 'webwiretech.com' ||
+    hostname.endsWith('.webwiretech.com')
+  ) {
+    return config.contactToEmailWwt || config.contactToEmail;
+  }
+
+  return config.contactToEmail;
+}
+
 function buildContactTemplateData(config, payload) {
   const brand = getBrandProfileForHostname(payload.sourceDomain, config);
 
@@ -184,7 +219,7 @@ function buildContactTemplateData(config, payload) {
     additional_fields_html: '',
     message: payload.message,
     ip_address: payload.remoteIp || 'Unavailable',
-    admin_email: config.contactToEmail,
+    admin_email: payload.adminEmail || config.contactToEmail,
     source_domain: payload.sourceDomain,
     timestamp: payload.timestamp,
     brand_company_name: brand.companyName,
@@ -471,6 +506,7 @@ export function createApp({
     const sourceDomain = req.headers.origin
       ? new URL(req.headers.origin).hostname
       : config.brandDomain;
+    const adminEmail = getAdminRecipientForHostname(sourceDomain, config);
     const templateData = buildContactTemplateData(config, {
       name,
       email,
@@ -480,6 +516,7 @@ export function createApp({
       subject,
       message,
       remoteIp: req.headers['x-forwarded-for'] || req.ip || '',
+      adminEmail,
       sourceDomain,
       timestamp
     });
@@ -488,7 +525,7 @@ export function createApp({
       await sendTemplatedEmail({
         client: sesClient,
         config,
-        toEmail: config.contactToEmail,
+        toEmail: adminEmail,
         replyToAddresses: [email],
         templateName: config.sesAdminTemplate,
         templateData

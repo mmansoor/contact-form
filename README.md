@@ -1,6 +1,6 @@
 # contact-form
 
-Minimal Cloud Run service for the shared contact-form backend used by `wwt.co` and `cloudvantage.co`.
+Minimal Cloud Run service for the shared contact-form backend used by `wwt.co`, `cloudvantage.co`, and `donornode.cloud`.
 
 ## Local development
 
@@ -30,6 +30,9 @@ Optional environment variables:
 - `PORT`
 - `RECAPTCHA_VERIFY_URL`
 - `SERVICE_BASE_URL`
+- `CONTACT_TO_EMAIL_DONORNODE`
+- `CONTACT_TO_EMAIL_CLOUDVANTAGE`
+- `CONTACT_TO_EMAIL_WWT`
 - `BRAND_COMPANY_NAME`
 - `BRAND_SITE_NAME`
 - `BRAND_DOMAIN`
