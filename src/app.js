@@ -8,7 +8,14 @@ import { loadConfig } from './config.js';
 const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co', 'webwiretech.com', 'donornode.cloud'];
+const ALLOWED_BASE_DOMAINS = ['wwt.co', 'cloudvantage.co', 'webwiretech.com'];
+const ALLOWED_DONORNODE_HOSTS = [
+  'donornode.cloud',
+  'app.donornode.cloud',
+  'dev.donornode.cloud',
+  'demo.donornode.cloud',
+  'donornode.com'
+];
 const BRAND_PROFILES = {
   cloudvantage: {
     companyName: 'CloudVantage',
@@ -103,6 +110,10 @@ export function isAllowedOrigin(originValue) {
     }
   }
 
+  if (ALLOWED_DONORNODE_HOSTS.includes(origin.hostname)) {
+    return origin.origin;
+  }
+
   return false;
 }
 
@@ -156,7 +167,11 @@ function createSesClient(config) {
 }
 
 function getBrandProfileForHostname(hostname, config) {
-  if (hostname === 'donornode.cloud' || hostname.endsWith('.donornode.cloud')) {
+  if (
+    hostname === 'donornode.cloud' ||
+    hostname.endsWith('.donornode.cloud') ||
+    hostname === 'donornode.com'
+  ) {
     return BRAND_PROFILES.donorNode;
   }
 
@@ -186,7 +201,11 @@ function getBrandProfileForHostname(hostname, config) {
 }
 
 function getAdminRecipientForHostname(hostname, config) {
-  if (hostname === 'donornode.cloud' || hostname.endsWith('.donornode.cloud')) {
+  if (
+    hostname === 'donornode.cloud' ||
+    hostname.endsWith('.donornode.cloud') ||
+    hostname === 'donornode.com'
+  ) {
     return config.contactToEmailDonorNode || config.contactToEmail;
   }
 
