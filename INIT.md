@@ -50,6 +50,7 @@ Allowed browser origins:
 
 - `https://wwt.co` and any HTTPS subdomain of `wwt.co`
 - `https://cloudvantage.co` and any HTTPS subdomain of `cloudvantage.co`
+- `https://donornode.cloud`, its `app`/`dev`/`demo` HTTPS subdomains, and `https://donornode.com` (apex only)
 - `http://localhost:<port>`
 - `https://localhost:<port>`
 - `http://127.0.0.1:<port>`

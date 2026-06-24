@@ -1,0 +1,209 @@
+================================================================================
+DONORNODE TENANT INTEGRATION — HANDOFF SUMMARY
+contact-form service
+Date: 2026-06-24
+================================================================================
+
+OVERVIEW
+--------
+DonorNode (donornode.cloud) was added as a third allowed tenant on the shared
+contact-form Cloud Run service. DonorNode's Hugo site on Cloudflare Pages can
+now POST to /api/contact/<secret>. Submissions resolve DonorNode branding, and
+the admin notification can be routed to a DonorNode-specific inbox. The
+submitter confirmation is unchanged. The work is MERGED and DEPLOYED to
+production.
+
+STATUS
+------
+- Branch: add-donornode-tenant (branched off `deployment`)
+- PR: #17  "Add DonorNode as a third tenant (CORS, brand, per-domain recipient)"
+  https://github.com/mmansoor/contact-form/pull/17
+- Merge commit: cdd3001cd651edc0344044e2b6c6f8c2fafbbc39
+- Base branch merged into: deployment (the branch that gates the deploy pipeline)
+- Deploy pipeline: GREEN (validate 13s + sync_aws_artifacts 20s + deploy_cloud_run 1m36s)
+- Live revision: contact-form-00004-pvp  (previous: contact-form-00003-l6z)
+- Live OPTIONS preflight from https://donornode.cloud: 204 + ACAO (verified)
+- Prod project: donor-node  | Region: us-central1
+- Live URLs:
+    https://contact-form.wwt.co   (custom domain)
+    https://contact-form-3yfkhq6tia-uc.a.run.app  (*.run.app)
+
+
+THE EIGHT CHANGES (files + line numbers in final state)
+-------------------------------------------------------
+1. CORS allowlist
+   src/app.js:11  -> ALLOWED_BASE_DOMAINS now includes 'donornode.cloud'.
+   Effect: https://donornode.cloud and any HTTPS subdomain (www/dev/demo/app)
+   pass isAllowedOrigin(). Localhost behavior unchanged.
+
+2. Brand profile
+   src/app.js:33-42 -> added BRAND_PROFILES.donorNode:
+     companyName  'DonorNode'
+     siteName     'DonorNode'
+     domain       'donornode.cloud'
+     url          'https://donornode.cloud'
+     supportEmail 'info@donornode.cloud'
+     teamName     'DonorNode Team'
+     privacyUrl   'https://donornode.cloud/privacy'
+     termsUrl     'https://donornode.cloud/terms'
+
+3. Brand resolution
+   src/app.js:159-161 -> getBrandProfileForHostname() has a new clause at the
+   TOP (above the env-fallback path):
+     if hostname === 'donornode.cloud' || hostname.endsWith('.donornode.cloud')
+     return BRAND_PROFILES.donorNode
+
+4. Per-tenant admin recipient (THE LOAD-BEARING CHANGE)
+   src/config.js:14-16 -> three optional env vars added (all default undefined):
+     CONTACT_TO_EMAIL_DONORNODE
+     CONTACT_TO_EMAIL_CLOUDVANTAGE
+     CONTACT_TO_EMAIL_WWT
+   CONTACT_TO_EMAIL is KEPT as the global fallback (not removed/renamed).
+
+   src/app.js:188-207 -> new helper getAdminRecipientForHostname(hostname, config)
+   mirrors the brand-resolution tree:
+     donornode.cloud / *.donornode.cloud   -> contactToEmailDonorNode
+     cloudvantage.co / *.cloudvantage.co   -> contactToEmailCloudvantage
+     wwt.co / *.wwt.co / webwiretech.com   -> contactToEmailWwt
+     anything else                         -> contactToEmail
+   Each tenant var falls back to config.contactToEmail when unset.
+
+   src/app.js:509 -> handler resolves: const adminEmail = getAdminRecipientForHostname(sourceDomain, config)
+   src/app.js:519 -> adminEmail passed into buildContactTemplateData payload
+   src/app.js:222 -> templateData.admin_email = payload.adminEmail || config.contactToEmail
+   src/app.js:528 -> admin SES send uses toEmail: adminEmail (was config.contactToEmail)
+
+   IMPORTANT: only the ADMIN notification To: and admin_email template var
+   changed. The submitter CONFIRMATION email still goes to the submitter's own
+   address, and its replyTo is still config.contactToEmail (unchanged per spec).
+   Sequential SES dispatch (admin first, halt on admin failure) is preserved.
+
+   Documentation of the new env vars:
+     README.md        -> "Optional environment variables" section
+     INIT.md          -> "Key environment variables" section (new subsection)
+     .env.local.example -> commented-out lines after CONTACT_TO_EMAIL
+
+5. OpenAPI contract
+   openapi.yaml:5 -> info.description updated to note donornode.cloud + its HTTPS
+   subdomains are now allowed origins. Request/response shape unchanged. No
+   schema edits. (openapi.yaml validates clean.)
+
+6. CORS allowlist test
+   test/app.test.js -> imported isAllowedOrigin (src/app.js:76 now exported it)
+   and added unit assertions:
+     isAllowedOrigin('https://donornode.cloud')      -> matches
+     isAllowedOrigin('https://app.donornode.cloud')  -> matches
+     isAllowedOrigin('https://dev.donornode.cloud')  -> matches
+     isAllowedOrigin('https://donornode.evil.com')   -> false
+     isAllowedOrigin('http://donornode.cloud')       -> false (http rejected)
+   Plus an OPTIONS preflight assertion (apex + subdomain -> 204 + ACAO).
+
+7. Brand resolution test
+   test/app.test.js -> POST with Origin: https://www.donornode.cloud resolves
+   to donorNode profile: brand_company_name 'DonorNode', brand_team_name
+   'DonorNode Team', brand_domain 'donornode.cloud', etc.
+
+8. Per-tenant recipient test
+   test/app.test.js -> with CONTACT_TO_EMAIL_DONORNODE='hello@donornode.cloud',
+   a donornode POST sends admin toEmail='hello@donornode.cloud' and
+   templateData.admin_email='hello@donornode.cloud'; confirmation still goes to
+   submitter. With the var UNSET, same request falls back to CONTACT_TO_EMAIL.
+
+   isAllowedOrigin was exported from src/app.js:76 to enable direct unit testing
+   (no new test framework; still node:test + light-my-request).
+
+Full test suite: 26/26 pass. `npm run validate` (lint + openapi + templates +
+tests) is green.
+
+
+VERIFICATION DONE
+-----------------
+Local:
+  npm run validate            -> 26/26 tests pass
+  npm run validate:openapi    -> valid
+  npm run validate:templates  -> structurally valid
+  Local OPTIONS preflight     -> donornode 204, evil 403
+
+Production (post-merge, revision contact-form-00004-pvp):
+  OPTIONS https://contact-form.wwt.co (Origin donornode.cloud)  -> 204 + ACAO
+  OPTIONS ... (Origin app.donornode.cloud)                      -> 204
+  OPTIONS ... (Origin evil.example.com)                         -> 403
+  Same results on the *.run.app URL.
+
+
+WHAT WAS *NOT* CHANGED (per spec — do not regress these)
+--------------------------------------------------------
+- /api/contact/<secret> URL format (contract-level)
+- CONTACT_API_SECRET — one shared secret per deployment; CORS is what tenancies
+  the request. DonorNode uses the SAME secret value as the other tenants.
+- Log event names: request_outcome, contact_secret_mismatch,
+  recaptcha_transport_failure, ses_delivery_failure, unhandled_application_error
+  (monitoring depends on them).
+- SES template JSON files (ses-templates/*-v2.json) — verified they contain NO
+  hardcoded wwt.co/webwiretech; they render via {{brand_*}} variables, so
+  DonorNode branding works with zero template edits. Do NOT rewrite them.
+- Sequential SES dispatch (admin first, confirmation second, halt on admin fail).
+
+
+REMAINING TODO (handoff action item)
+------------------------------------
+Set CONTACT_TO_EMAIL_DONORNODE in Cloud Run (value provided separately; NO real
+address was committed in the PR). Until it is set, DonorNode admin notifications
+fall back to the global CONTACT_TO_EMAIL (info@wwt.co).
+
+How to set it (Console or CLI). It persists across deploys because the deploy
+action uses update-env-vars semantics (unlisted env vars are preserved):
+  gcloud run services update contact-form \
+    --region us-central1 --project donor-node \
+    --update-env-vars CONTACT_TO_EMAIL_DONORNODE=<donornode-inbox@example>
+
+Optional, only if per-tenant inbox split is later desired for the other tenants:
+  CONTACT_TO_EMAIL_CLOUDVANTAGE, CONTACT_TO_EMAIL_WWT
+
+Note: the deploy workflow (.github/workflows/deploy.yml) was intentionally NOT
+modified — item 4d only required README/INIT.md/.env.local.example. The env var
+is meant to be set directly in Cloud Run, not via GitHub vars/deploy.yml.
+
+
+OPERATIONAL NOTES FOR THE NEXT AGENT
+------------------------------------
+1. gcloud CLI caveat: gcloud is installed at
+   /opt/homebrew/share/google-cloud-sdk/bin/gcloud but FAILS by default because
+   it is pinned to Python 3.9 (unsupported). You MUST prefix gcloud commands
+   with:  export CLOUDSDK_PYTHON=/opt/homebrew/bin/python3.14
+   (Consider adding this to shell rc so it persists.)
+
+2. GCP access is working: account mmansoor@gmail.com, default project donor-node.
+   Secret Manager is readable (CONTACT_API_SECRET etc. are secret-backed).
+
+3. Production BRAND_* env vars are all wwt.co/Web Wire Technologies — this is
+   HARMLESS: brand resolution for donornode.cloud/cloudvantage.co/wwt.co is
+   hardcoded in the app; BRAND_* only feeds the FALLBACK profile for unknown
+   hostnames. No need to touch BRAND_* for DonorNode.
+
+4. There is a STALE, UNUSED repo variable: CONTACT_ALLOWED_BASE_DOMAINS
+   (wwt.co,cloudvantage.co). It is NOT wired into the app (the allowlist is
+   hardcoded in src/app.js). Out of scope for this work but safe to clean up
+   later. It does NOT include donornode.cloud either way and has no effect.
+
+5. The deployed revision (contact-form-00004-pvp) already serves DonorNode CORS
+   + branding correctly. Only the per-tenant recipient routing depends on the
+   env var being set.
+
+6. Root route GET / still returns the text 'CloudVantage.co wwt.co' (unchanged)
+   — not part of the spec; left as-is. Update if you want DonorNode listed there.
+
+
+KEY CODE LOCATIONS (for quick navigation)
+-----------------------------------------
+- src/app.js:11      ALLOWED_BASE_DOMAINS
+- src/app.js:33-42   BRAND_PROFILES.donorNode
+- src/app.js:76      export function isAllowedOrigin(...)
+- src/app.js:158     getBrandProfileForHostname (donornode clause at 159)
+- src/app.js:188     getAdminRecipientForHostname (new)
+- src/app.js:222     admin_email in buildContactTemplateData
+- src/app.js:509     handler adminEmail resolution
+- src/app.js:528     admin send To: adminEmail
+- src/config.js:14   contactToEmailDonorNode/Cloudvantage/Wwt
+- test/app.test.js   5 new tests near the brand/CORS tests
+================================================================================
