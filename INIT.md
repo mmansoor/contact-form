@@ -137,6 +137,34 @@ Optional per-tenant admin recipients (override `CONTACT_TO_EMAIL` for the matchi
 - `CONTACT_TO_EMAIL_CLOUDVANTAGE`
 - `CONTACT_TO_EMAIL_WWT`
 
+## Configurable v2 contact API
+
+The v2 endpoint (`POST /api/v2/contact`) is a config-driven, multi-tenant alternative to the legacy shared-secret path. It is **opt-in and dormant by default** — it only activates when `CONTACT_FORM_CONFIG_SOURCE` is set.
+
+### Config model
+
+- Routing config is a single JSON document (see `config/contact-form-routing-config.sample.json`).
+- Each site defines `originRules` (exact or regex), email recipients (`to`/`cc`), optional per-site confirmation, and security toggles (`clientKeyHash`, `captchaRequired`, rate-limit, etc.).
+- Config is loaded once at startup. If validation fails the server will not start — Cloud Run rolls back the revision.
+- To update production config: update the Secret Manager secret, then bounce the Cloud Run service. There is no TTL or hot-reload.
+
+### Operating rules
+
+- **No hard-coded domains** in application code. All origins live in config.
+- The per-site `clientKeyHash` is a sha-256 of the plaintext client key. Store only the hash in config; distribute the plaintext to the frontend out-of-band.
+- reCAPTCHA is required by default (`captchaRequired: true`). Sites that disable it must have an equivalent guard (client key + strict origin).
+- The v2 router coexists with the legacy endpoint. Do not remove the legacy endpoint until all frontends have migrated.
+
+### v2 config environment variables
+
+- `CONTACT_FORM_CONFIG_SOURCE` — `file`, `env`, or `secret-manager` (unset = v2 dormant).
+- `CONTACT_FORM_CONFIG_FILE` — path to local JSON (when source is `file`).
+- `CONTACT_FORM_CONFIG_JSON` — inline JSON string (when source is `env`).
+- `CONTACT_FORM_CONFIG_SECRET_NAME` — Secret Manager secret name (when source is `secret-manager`).
+- `CONTACT_FORM_CONFIG_PROJECT_ID` — GCP project holding the secret (defaults to `GOOGLE_CLOUD_PROJECT` / Cloud Run metadata).
+
+See [infra/gcp/secret-manager-iam.md](./infra/gcp/secret-manager-iam.md) for one-time Secret Manager setup.
+
 ## High-risk changes
 
 Do not casually change:

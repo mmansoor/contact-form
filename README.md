@@ -33,6 +33,11 @@ Optional environment variables:
 - `CONTACT_TO_EMAIL_DONORNODE`
 - `CONTACT_TO_EMAIL_CLOUDVANTAGE`
 - `CONTACT_TO_EMAIL_WWT`
+- `CONTACT_FORM_CONFIG_SOURCE`
+- `CONTACT_FORM_CONFIG_FILE`
+- `CONTACT_FORM_CONFIG_JSON`
+- `CONTACT_FORM_CONFIG_SECRET_NAME`
+- `CONTACT_FORM_CONFIG_PROJECT_ID`
 - `BRAND_COMPANY_NAME`
 - `BRAND_SITE_NAME`
 - `BRAND_DOMAIN`
@@ -62,10 +67,42 @@ The repo includes a GitHub Actions workflow for the `deployment` branch that val
 
 ## Endpoints
 
+### Legacy (hard-coded CORS, shared-secret path)
+
 - `POST /api/contact/<shared-secret>`
 - `OPTIONS /api/contact/<shared-secret>`
 - `GET /contracts/<docs-secret>/openapi.yaml`
 - `GET /contracts/<docs-secret>/docs`
 - `GET /healthz`
+
+### Configurable v2 (opt-in, config-driven routing)
+
+- `POST /api/v2/contact`
+- `OPTIONS /api/v2/contact`
+
+The v2 router is **dormant by default**. It only mounts when `CONTACT_FORM_CONFIG_SOURCE` is set. Allowed origins, recipients, client keys, and per-site security toggles are all defined in the routing config — no domains are hard-coded in the application.
+
+See [config/contact-form-routing-config.sample.json](./config/contact-form-routing-config.sample.json) for the full config shape.
+
+## Configurable v2 contact API
+
+### Config sources
+
+| `CONTACT_FORM_CONFIG_SOURCE` | How config is provided |
+|---|---|
+| _(unset)_ | v2 router is not mounted. Legacy endpoint works as before. |
+| `file` | Load from the JSON file at `CONTACT_FORM_CONFIG_FILE`. |
+| `env` | Load from inline JSON in `CONTACT_FORM_CONFIG_JSON`. |
+| `secret-manager` | Fetch from GCP Secret Manager (`CONTACT_FORM_CONFIG_SECRET_NAME` in `CONTACT_FORM_CONFIG_PROJECT_ID`). |
+
+Config is loaded **once at startup** and validated. If it fails validation the server will not start (Cloud Run revision fails health checks and rolls back). To update config in production: update the secret, then bounce the Cloud Run service.
+
+### Local development with v2
+
+```bash
+CONTACT_FORM_CONFIG_SOURCE=file \
+CONTACT_FORM_CONFIG_FILE=config/contact-form-routing-config.sample.json \
+npm run dev
+```
 
 See [INIT.md](./INIT.md) for ownership and operating rules.
