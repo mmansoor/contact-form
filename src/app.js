@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { SendEmailCommand, SESv2Client } from '@aws-sdk/client-sesv2';
 import { loadConfig } from './config.js';
+import { createContactRouter } from './contact/route.js';
 
 const upload = multer();
 const openApiPath = fileURLToPath(new URL('../openapi.yaml', import.meta.url));
@@ -318,13 +319,32 @@ export function createApp({
   logger = console,
   verifyRecaptcha = defaultVerifyRecaptcha,
   sendTemplatedEmail = defaultSendTemplatedEmail,
-  fetchImpl = globalThis.fetch
+  fetchImpl = globalThis.fetch,
+  routingConfig = null,
+  sendContactEmail
 } = {}) {
   const config = loadConfig(env);
   const app = express();
   const sesClient = createSesClient(config);
 
   app.disable('x-powered-by');
+
+  if (routingConfig) {
+    app.use(
+      '/api/v2/contact',
+      createContactRouter({
+        routingConfig,
+        sesClient,
+        contactFromEmail: config.contactFromEmail,
+        recaptchaSecret: config.recaptchaSecret,
+        recaptchaVerifyUrl: config.recaptchaVerifyUrl,
+        verifyRecaptcha,
+        sendEmail: sendContactEmail,
+        fetchImpl,
+        logger
+      })
+    );
+  }
 
   app.use((req, res, next) => {
     const startedAt = Date.now();

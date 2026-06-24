@@ -120,6 +120,92 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContactResponse'
+  /api/v2/contact:
+    options:
+      summary: CORS preflight for the config-driven contact endpoint
+      responses:
+        '204':
+          description: Preflight accepted; Access-Control-Allow-Origin echoes the matched origin.
+        '403':
+          description: Origin is not configured.
+    post:
+      summary: Submit a contact form routed by server-side config
+      description: >
+        Config-driven multi-tenant endpoint. The request Origin is matched
+        against server-side routing config; on a match the submission is emailed
+        to the matched site's to/cc recipients. Per-site client key and
+        reCAPTCHA may be required. Allowed origins are defined in config only
+        (no hard-coded domains).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContactFormV2'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ContactFormV2'
+      responses:
+        '200':
+          description: Form accepted and emails were sent.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '400':
+          description: Validation failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '403':
+          description: Origin not allowed or client key missing/invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '405':
+          description: Method not allowed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '413':
+          description: Request body too large.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '415':
+          description: Unsupported content type.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '429':
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '500':
+          description: Server configuration failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '502':
+          description: reCAPTCHA transport failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
+        '503':
+          description: SES delivery failure.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContactResponse'
 components:
   parameters:
     ContactSecret:
@@ -159,6 +245,31 @@ components:
         g-recaptcha-response:
           type: string
           minLength: 1
+    ContactFormV2:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - email
+        - message
+      properties:
+        name:
+          type: string
+          minLength: 1
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        organization:
+          type: string
+        subject:
+          type: string
+        message:
+          type: string
+          minLength: 1
+        g-recaptcha-response:
+          type: string
     ContactResponse:
       type: object
       additionalProperties: false

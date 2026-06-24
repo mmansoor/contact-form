@@ -23,6 +23,11 @@ export function loadConfig(env = process.env) {
     brandSupportEmail: env.BRAND_SUPPORT_EMAIL || 'info@wwt.co',
     brandTeamName: env.BRAND_TEAM_NAME || 'Web Wire Technologies Team',
     brandPrivacyUrl: env.BRAND_PRIVACY_URL || 'https://wwt.co/privacy',
-    brandTermsUrl: env.BRAND_TERMS_URL || 'https://wwt.co/terms'
+    brandTermsUrl: env.BRAND_TERMS_URL || 'https://wwt.co/terms',
+    contactFormConfigSource: env.CONTACT_FORM_CONFIG_SOURCE || '',
+    contactFormConfigSecretName: env.CONTACT_FORM_CONFIG_SECRET_NAME || 'contact-form-routing-config',
+    contactFormConfigProjectId: env.CONTACT_FORM_CONFIG_PROJECT_ID || '',
+    contactFormConfigFile: env.CONTACT_FORM_CONFIG_FILE || './config/contact-form-routing-config.json',
+    contactFormConfigJson: env.CONTACT_FORM_CONFIG_JSON || ''
   };
 }
