@@ -115,6 +115,8 @@ export function createContactRouter({
   recaptchaVerifyUrl,
   verifyRecaptcha = defaultVerifyRecaptcha,
   sendEmail = defaultSendEmail,
+  notificationTemplate = 'contact-form-admin-notification-v2',
+  confirmationTemplate = 'contact-form-confirmation-v2',
   fetchImpl = globalThis.fetch,
   logger = console
 }) {
@@ -300,6 +302,7 @@ export function createContactRouter({
         origin,
         siteId: site.id,
         requestId,
+        remoteIp,
         timestamp: new Date().toISOString()
       };
 
@@ -310,6 +313,8 @@ export function createContactRouter({
           fromEmail: contactFromEmail,
           site,
           payload,
+          notificationTemplate,
+          confirmationTemplate,
           logger
         });
       } catch (error) {

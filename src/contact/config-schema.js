@@ -74,6 +74,8 @@ export const routingConfigSchema = {
                 default: []
               },
               replyToFromForm: { type: 'boolean', default: true },
+              notificationTemplate: { type: 'string' },
+              confirmationTemplate: { type: 'string' },
               confirmation: {
                 type: 'object',
                 additionalProperties: false,
@@ -120,7 +122,13 @@ export const routingConfigSchema = {
             additionalProperties: false,
             properties: {
               siteName: { type: 'string' },
-              supportEmail: { type: 'string', format: 'email' }
+              companyName: { type: 'string' },
+              domain: { type: 'string' },
+              url: { type: 'string' },
+              supportEmail: { type: 'string', format: 'email' },
+              teamName: { type: 'string' },
+              privacyUrl: { type: 'string' },
+              termsUrl: { type: 'string' }
             }
           }
         }

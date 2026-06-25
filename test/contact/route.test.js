@@ -133,8 +133,13 @@ test('allows an exact origin and routes to the configured recipients', async () 
   assert.deepEqual(sent[0].to, ['contact@donornode.com', 'support@donornode.com']);
   assert.deepEqual(sent[0].cc, ['admin@donornode.com']);
   assert.deepEqual(sent[0].replyTo, ['jane@example.com']);
+  assert.equal(sent[0].templateName, 'contact-form-admin-notification-v2');
+  assert.equal(sent[0].templateData.name, 'Jane Doe');
+  assert.equal(sent[0].templateData.email, 'jane@example.com');
+  assert.equal(sent[0].templateData.brand_site_name, 'DonorNode');
   // confirmation email goes to the submitter
   assert.deepEqual(sent[1].to, ['jane@example.com']);
+  assert.equal(sent[1].templateName, 'contact-form-confirmation-v2');
 });
 
 test('allows a regex origin', async () => {
