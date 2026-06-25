@@ -340,6 +340,8 @@ export function createApp({
         recaptchaVerifyUrl: config.recaptchaVerifyUrl,
         verifyRecaptcha,
         sendEmail: sendContactEmail,
+        notificationTemplate: config.sesAdminTemplate,
+        confirmationTemplate: config.sesConfirmationTemplate,
         fetchImpl,
         logger
       })
