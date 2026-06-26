@@ -45,7 +45,13 @@
       },
       "branding": {
         "siteName": "DonorNode",
-        "supportEmail": "support@donornode.com"
+        "companyName": "DonorNode",
+        "domain": "donornode.com",
+        "url": "https://donornode.com",
+        "supportEmail": "support@donornode.com",
+        "teamName": "The DonorNode Team",
+        "privacyUrl": "https://donornode.com/privacy",
+        "termsUrl": "https://donornode.com/terms"
       }
     },
     {
@@ -70,8 +76,14 @@
         "captchaRequired": true
       },
       "branding": {
-        "siteName": "Web Wire Tech",
-        "supportEmail": "info@wwt.co"
+        "siteName": "Web Wire Technologies",
+        "companyName": "Web Wire Technologies",
+        "domain": "wwt.co",
+        "url": "https://wwt.co",
+        "supportEmail": "info@wwt.co",
+        "teamName": "Web Wire Technologies Team",
+        "privacyUrl": "https://wwt.co/privacy",
+        "termsUrl": "https://wwt.co/terms"
       }
     },
     {
@@ -97,7 +109,13 @@
       },
       "branding": {
         "siteName": "CloudVantage",
-        "supportEmail": "info@cloudvantage.co"
+        "companyName": "CloudVantage",
+        "domain": "cloudvantage.co",
+        "url": "https://cloudvantage.co",
+        "supportEmail": "info@cloudvantage.co",
+        "teamName": "The CloudVantage Team",
+        "privacyUrl": "https://cloudvantage.co/privacy",
+        "termsUrl": "https://cloudvantage.co/terms"
       }
     }
   ]
