@@ -12,7 +12,7 @@ for (const path of requiredFiles) {
   if (!parsed.TemplateName || !parsed.TemplateContent) {
     throw new Error(`Template file ${path} is missing TemplateName or TemplateContent.`);
   }
-  for (const field of ['Subject', 'Text', 'Html']) {
+  for (const field of ['Subject', 'Html']) {
     if (!parsed.TemplateContent[field]) {
       throw new Error(`Template file ${path} is missing TemplateContent.${field}.`);
     }
