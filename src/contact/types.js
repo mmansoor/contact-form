@@ -36,6 +36,8 @@
  * @property {string[]} to
  * @property {string[]} cc
  * @property {boolean} replyToFromForm
+ * @property {string} [notificationTemplate]
+ * @property {string} [confirmationTemplate]
  * @property {ConfirmationPolicy} [confirmation]
  */
 
@@ -58,7 +60,13 @@
 /**
  * @typedef {Object} Branding
  * @property {string} [siteName]
+ * @property {string} [companyName]
+ * @property {string} [domain]
+ * @property {string} [url]
  * @property {string} [supportEmail]
+ * @property {string} [teamName]
+ * @property {string} [privacyUrl]
+ * @property {string} [termsUrl]
  */
 
 /**

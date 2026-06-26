@@ -84,6 +84,8 @@ The v2 router is **dormant by default**. It only mounts when `CONTACT_FORM_CONFI
 
 See [config/contact-form-routing-config.sample.json](./config/contact-form-routing-config.sample.json) for the full config shape.
 
+For endpoint details, test examples, and per-site configuration see the **[V2 Contact API Reference](./docs/V2-CONTACT-API.md)**.
+
 ## Configurable v2 contact API
 
 ### Config sources

@@ -9,7 +9,7 @@ export CLOUDSDK_PYTHON=/opt/homebrew/bin/python3.14
 
 # Create an empty secret (latest version added in the next step)
 gcloud secrets create contact-form-routing-config \
-  --project=donor-node \
+  --project=contact-form-495912 \
   --replication-policy=automatic
 ```
 
@@ -17,8 +17,8 @@ gcloud secrets create contact-form-routing-config \
 
 ```bash
 gcloud secrets versions add contact-form-routing-config \
-  --project=donor-node \
-  --data-file=config/contact-form-routing-config-config.json
+  --project=contact-form-495912 \
+  --data-file=config/contact-form-routing-config.json
 ```
 
 Use your **production** config file (not the sample). The sample at
@@ -28,8 +28,8 @@ Use your **production** config file (not the sample). The sample at
 
 ```bash
 gcloud secrets add-iam-policy-binding contact-form-routing-config \
-  --project=donor-node \
-  --member=serviceAccount:contact-form-runtime@donor-node.iam.gserviceaccount.com \
+  --project=contact-form-495912 \
+  --member=serviceAccount:contact-form-deploy@contact-form-495912.iam.gserviceaccount.com \
   --role=roles/secretmanager.secretAccessor
 ```
 
@@ -41,7 +41,7 @@ workflow's `vars`):
 ```
 CONTACT_FORM_CONFIG_SOURCE=secret-manager
 CONTACT_FORM_CONFIG_SECRET_NAME=contact-form-routing-config
-CONTACT_FORM_CONFIG_PROJECT_ID=donor-node
+CONTACT_FORM_CONFIG_PROJECT_ID=contact-form-495912
 ```
 
 ## 5. Deploy / bounce
