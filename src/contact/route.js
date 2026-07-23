@@ -298,6 +298,8 @@ export function createContactRouter({
         message,
         phone: String(body.phone || '').trim(),
         organization: String(body.organization || '').trim(),
+        company: String(body.company || '').trim(),
+        inquiryType: String(body.inquiry_type || '').trim(),
         subject: String(body.subject || '').trim(),
         origin,
         siteId: site.id,

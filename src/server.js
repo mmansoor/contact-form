@@ -4,16 +4,17 @@ import { loadRoutingConfig } from './contact/load-config.js';
 
 const config = loadConfig(process.env);
 
-let routingConfig = null;
-if (config.contactFormConfigSource) {
-  routingConfig = await loadRoutingConfig({
-    source: config.contactFormConfigSource,
-    secretName: config.contactFormConfigSecretName,
-    projectId: config.contactFormConfigProjectId,
-    filePath: config.contactFormConfigFile,
-    inlineJson: config.contactFormConfigJson
-  });
+if (!config.contactFormConfigSource) {
+  throw new Error('CONTACT_FORM_CONFIG_SOURCE is required.');
 }
+
+const routingConfig = await loadRoutingConfig({
+  source: config.contactFormConfigSource,
+  secretName: config.contactFormConfigSecretName,
+  projectId: config.contactFormConfigProjectId,
+  filePath: config.contactFormConfigFile,
+  inlineJson: config.contactFormConfigJson
+});
 
 const app = createApp({ env: process.env, routingConfig });
 
@@ -24,7 +25,7 @@ app.listen(config.port, () => {
       service: 'contact-form',
       event: 'server_started',
       port: config.port,
-      v2_routing: routingConfig ? 'enabled' : 'disabled'
+      v2_routing: 'enabled'
     })
   );
 });

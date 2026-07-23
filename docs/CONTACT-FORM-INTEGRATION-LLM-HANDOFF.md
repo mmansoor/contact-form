@@ -28,7 +28,7 @@ Use only the row matching the website being changed:
 
 | Site | Browser origin | Optional fields | Client key |
 |---|---|---|---|
-| Web Wire Technologies | `https://wwt.co` or `https://www.wwt.co` | `phone`, `company`, `subject` | Not required |
+| Web Wire Technologies | `https://wwt.co` or `https://www.wwt.co` | `phone`, `company`, `inquiry_type`, `subject` | Not required |
 | CloudVantage | `https://cloudvantage.co` or `https://www.cloudvantage.co` | `phone`, `company`, `subject` | Not required |
 | DonorNode | `https://donornode.com`, `https://www.donornode.com`, or `https://dev.donornode.cloud`, `https://demo.donornode.cloud`, `https://app.donornode.cloud` | `phone`, `organization`, `subject` | Required |
 
@@ -119,6 +119,7 @@ const payload = {
 
 if (values.phone?.trim()) payload.phone = values.phone.trim();
 if (values.company?.trim()) payload.company = values.company.trim();
+if (values.inquiry_type?.trim()) payload.inquiry_type = values.inquiry_type.trim();
 if (values.subject?.trim()) payload.subject = values.subject.trim();
 if ('company_website' in values) {
   payload.company_website = values.company_website;

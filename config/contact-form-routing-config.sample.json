@@ -64,11 +64,15 @@
       ],
       "email": {
         "to": ["info@wwt.co"],
-        "replyToFromForm": true
+        "replyToFromForm": true,
+        "confirmation": {
+          "enabled": true,
+          "subject": "Thanks for contacting Web Wire Technologies"
+        }
       },
       "formPolicy": {
         "requiredFields": ["name", "email", "message"],
-        "allowedFields": ["name", "email", "phone", "company", "subject", "message"],
+        "allowedFields": ["name", "email", "phone", "company", "inquiry_type", "subject", "message"],
         "maxMessageLength": 5000
       },
       "security": {
