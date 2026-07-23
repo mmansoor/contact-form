@@ -87,6 +87,22 @@ export function validateRoutingConfig(input) {
     }
   }
 
+  // A browser preflights any non-safelisted client-key header. Keep CORS in
+  // sync with per-site security config so a valid client-key policy cannot be
+  // deployed with an unusable browser integration.
+  const allowedHeaderNames = new Set(
+    config.defaultPolicy.allowedHeaders.map((header) => header.toLowerCase())
+  );
+  for (const site of config.sites) {
+    if (site.enabled !== false && site.security.clientKeyRequired) {
+      const clientKeyHeader = site.security.clientKeyHeader;
+      if (!allowedHeaderNames.has(clientKeyHeader.toLowerCase())) {
+        config.defaultPolicy.allowedHeaders.push(clientKeyHeader);
+        allowedHeaderNames.add(clientKeyHeader.toLowerCase());
+      }
+    }
+  }
+
   const seenIds = new Set();
   const seenExactOrigins = new Map();
 

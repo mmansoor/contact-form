@@ -114,6 +114,19 @@ test('rejects clientKeyRequired without a valid sha256 hash', () => {
   assert.throws(() => validateRoutingConfig(cfg), /clientKeyHash/);
 });
 
+test('adds a required client key header to the CORS allow-list', () => {
+  const cfg = baseConfig();
+  cfg.defaultPolicy = { allowedHeaders: ['Content-Type'] };
+  cfg.sites[0].security = {
+    clientKeyRequired: true,
+    clientKeyHeader: 'X-Custom-Client-Key',
+    clientKeyHash: 'a'.repeat(64)
+  };
+
+  const out = validateRoutingConfig(cfg);
+  assert.deepEqual(out.defaultPolicy.allowedHeaders, ['Content-Type', 'X-Custom-Client-Key']);
+});
+
 test('does not mutate the caller input', () => {
   const input = baseConfig();
   const snapshot = JSON.parse(JSON.stringify(input));

@@ -13,7 +13,12 @@ function routingConfig() {
     defaultPolicy: {
       allowCredentials: false,
       allowedMethods: ['POST', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Request-Id',
+        'X-Contact-Client-Key'
+      ],
       maxBodyKb: 64,
       rateLimit: { enabled: false }
     },
@@ -109,6 +114,10 @@ test('handles OPTIONS preflight for an allowed origin', async () => {
   assert.equal(response.statusCode, 204);
   assert.equal(response.headers['access-control-allow-origin'], 'https://donornode.com');
   assert.equal(response.headers['access-control-allow-methods'], 'POST, OPTIONS');
+  assert.match(
+    response.headers['access-control-allow-headers'],
+    /(?:^|,\s*)X-Contact-Client-Key(?:,|$)/i
+  );
   assert.equal(response.headers.vary, 'Origin');
   assert.equal(response.headers['access-control-allow-credentials'], undefined);
 });
