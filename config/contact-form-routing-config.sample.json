@@ -1,0 +1,122 @@
+{
+  "version": "2026-06-24",
+  "service": "contact-form-api",
+  "defaultPolicy": {
+    "allowCredentials": false,
+    "allowedMethods": ["POST", "OPTIONS"],
+    "allowedHeaders": ["Content-Type", "Authorization", "X-Request-Id", "X-Contact-Client-Key"],
+    "maxBodyKb": 64,
+    "rateLimit": {
+      "enabled": true,
+      "windowSeconds": 60,
+      "maxRequests": 20
+    }
+  },
+  "sites": [
+    {
+      "id": "donornode",
+      "enabled": true,
+      "description": "DonorNode public, dev, demo, and app contact forms",
+      "originRules": [
+        { "type": "exact", "value": "https://donornode.com" },
+        { "type": "exact", "value": "https://www.donornode.com" },
+        { "type": "regex", "value": "^https://(dev|demo|app)\\.donornode\\.cloud$" }
+      ],
+      "email": {
+        "to": ["contact@donornode.com", "support@donornode.com"],
+        "cc": ["admin@donornode.com"],
+        "replyToFromForm": true,
+        "confirmation": {
+          "enabled": true,
+          "subject": "Thanks for contacting DonorNode"
+        }
+      },
+      "formPolicy": {
+        "requiredFields": ["name", "email", "message"],
+        "allowedFields": ["name", "email", "phone", "organization", "subject", "message"],
+        "maxMessageLength": 5000,
+        "honeypotFields": ["company_website"]
+      },
+      "security": {
+        "clientKeyRequired": true,
+        "clientKeyHeader": "X-Contact-Client-Key",
+        "clientKeyHash": "1f66150ca537650759b6cf81ab2b5d2f272bcffd8601a72b8775a8a4733a33cd",
+        "captchaRequired": true
+      },
+      "branding": {
+        "siteName": "DonorNode",
+        "companyName": "DonorNode",
+        "domain": "donornode.com",
+        "url": "https://donornode.com",
+        "supportEmail": "support@donornode.com",
+        "teamName": "The DonorNode Team",
+        "privacyUrl": "https://donornode.com/privacy",
+        "termsUrl": "https://donornode.com/terms"
+      }
+    },
+    {
+      "id": "wwt",
+      "enabled": true,
+      "description": "Web Wire Technologies contact forms",
+      "originRules": [
+        { "type": "exact", "value": "https://wwt.co" },
+        { "type": "exact", "value": "https://www.wwt.co" }
+      ],
+      "email": {
+        "to": ["info@wwt.co"],
+        "replyToFromForm": true
+      },
+      "formPolicy": {
+        "requiredFields": ["name", "email", "message"],
+        "allowedFields": ["name", "email", "phone", "company", "subject", "message"],
+        "maxMessageLength": 5000
+      },
+      "security": {
+        "clientKeyRequired": false,
+        "captchaRequired": true
+      },
+      "branding": {
+        "siteName": "Web Wire Technologies",
+        "companyName": "Web Wire Technologies",
+        "domain": "wwt.co",
+        "url": "https://wwt.co",
+        "supportEmail": "info@wwt.co",
+        "teamName": "Web Wire Technologies Team",
+        "privacyUrl": "https://wwt.co/privacy",
+        "termsUrl": "https://wwt.co/terms"
+      }
+    },
+    {
+      "id": "cloudvantage",
+      "enabled": true,
+      "description": "CloudVantage contact forms",
+      "originRules": [
+        { "type": "exact", "value": "https://cloudvantage.co" },
+        { "type": "exact", "value": "https://www.cloudvantage.co" }
+      ],
+      "email": {
+        "to": ["info@cloudvantage.co"],
+        "replyToFromForm": true
+      },
+      "formPolicy": {
+        "requiredFields": ["name", "email", "message"],
+        "allowedFields": ["name", "email", "phone", "company", "subject", "message"],
+        "maxMessageLength": 5000
+      },
+      "security": {
+        "clientKeyRequired": false,
+        "captchaRequired": true
+      },
+      "branding": {
+        "siteName": "CloudVantage",
+        "companyName": "CloudVantage",
+        "domain": "cloudvantage.co",
+        "url": "https://cloudvantage.co",
+        "supportEmail": "info@cloudvantage.co",
+        "teamName": "The CloudVantage Team",
+        "privacyUrl": "https://cloudvantage.co/privacy",
+        "termsUrl": "https://cloudvantage.co/terms"
+      }
+    }
+  ]
+}

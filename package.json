@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --env-file-if-exists=.env.local --watch src/server.js",
-    "lint": "node --check src/*.js src/**/*.js test/*.js scripts/*.js",
+    "lint": "node --check src/*.js src/**/*.js test/*.js test/**/*.js scripts/*.js",
     "test": "node --test",
     "validate:openapi": "node scripts/validate-openapi.js",
     "validate:templates": "node scripts/validate-ses-templates.js",
@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-sesv2": "^3.921.0",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
     "express": "^5.1.0",
     "multer": "^2.0.2"
   },

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inject } from 'light-my-request';
-import { createApp } from '../src/app.js';
+import { createApp, isAllowedOrigin } from '../src/app.js';
 
 function createLogger() {
   const messages = [];
@@ -322,6 +322,106 @@ test('uses Web Wire Tech branding for webwiretech requests', async () => {
   assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
   assert.equal(sentEmails[0].templateData.brand_domain, 'wwt.co');
   assert.equal(sentEmails[0].templateData.brand_url, 'https://wwt.co');
+});
+
+test('isAllowedOrigin matches donornode origins and rejects lookalikes', () => {
+  assert.equal(isAllowedOrigin('https://donornode.cloud'), 'https://donornode.cloud');
+  assert.equal(isAllowedOrigin('https://app.donornode.cloud'), 'https://app.donornode.cloud');
+  assert.equal(isAllowedOrigin('https://dev.donornode.cloud'), 'https://dev.donornode.cloud');
+  assert.equal(isAllowedOrigin('https://demo.donornode.cloud'), 'https://demo.donornode.cloud');
+  assert.equal(isAllowedOrigin('https://donornode.com'), 'https://donornode.com');
+  assert.equal(isAllowedOrigin('https://www.donornode.cloud'), false);
+  assert.equal(isAllowedOrigin('https://app.donornode.com'), false);
+  assert.equal(isAllowedOrigin('https://donornode.evil.com'), false);
+  assert.equal(isAllowedOrigin('http://donornode.cloud'), false);
+});
+
+test('allows donornode apex, app/dev/demo subdomains, and donornode.com; blocks www', async () => {
+  const { app } = buildApp();
+
+  for (const origin of [
+    'https://donornode.cloud',
+    'https://app.donornode.cloud',
+    'https://dev.donornode.cloud',
+    'https://demo.donornode.cloud',
+    'https://donornode.com'
+  ]) {
+    const res = await inject(app, {
+      method: 'OPTIONS',
+      url: '/api/contact/shared-secret',
+      headers: { origin }
+    });
+    assert.equal(res.statusCode, 204, `${origin} should be allowed`);
+    assert.equal(res.headers['access-control-allow-origin'], origin);
+  }
+
+  for (const origin of [
+    'https://www.donornode.cloud',
+    'https://app.donornode.com',
+    'https://donornode.evil.com'
+  ]) {
+    const res = await inject(app, {
+      method: 'OPTIONS',
+      url: '/api/contact/shared-secret',
+      headers: { origin }
+    });
+    assert.equal(res.statusCode, 403, `${origin} should be blocked`);
+  }
+});
+
+test('uses DonorNode branding for donornode requests', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://donornode.cloud'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'DonorNode');
+  assert.equal(sentEmails[0].templateData.brand_site_name, 'DonorNode');
+  assert.equal(sentEmails[0].templateData.brand_domain, 'donornode.cloud');
+  assert.equal(sentEmails[0].templateData.brand_url, 'https://donornode.cloud');
+  assert.equal(sentEmails[0].templateData.brand_support_email, 'info@donornode.cloud');
+  assert.equal(sentEmails[0].templateData.brand_team_name, 'DonorNode Team');
+});
+
+test('treats donornode.com as DonorNode for branding and recipient', async () => {
+  const { app, sentEmails } = buildApp({
+    env: { CONTACT_TO_EMAIL_DONORNODE: 'hello@donornode.cloud' }
+  });
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://donornode.com'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].templateData.brand_company_name, 'DonorNode');
+  assert.equal(sentEmails[0].templateData.brand_team_name, 'DonorNode Team');
+  assert.equal(sentEmails[0].toEmail, 'hello@donornode.cloud');
+  assert.equal(sentEmails[1].toEmail, 'jane@example.com');
+});
+
+test('routes donornode admin send to per-tenant recipient when set', async () => {
+  const { app, sentEmails } = buildApp({
+    env: { CONTACT_TO_EMAIL_DONORNODE: 'hello@donornode.cloud' }
+  });
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://donornode.cloud'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].toEmail, 'hello@donornode.cloud');
+  assert.equal(sentEmails[0].templateData.admin_email, 'hello@donornode.cloud');
+  assert.equal(sentEmails[1].toEmail, 'jane@example.com');
+});
+
+test('falls back to CONTACT_TO_EMAIL when donornode recipient is unset', async () => {
+  const { app, sentEmails } = buildApp();
+  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
+    origin: 'https://donornode.cloud'
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sentEmails[0].toEmail, 'info@wwt.co');
+  assert.equal(sentEmails[0].templateData.admin_email, 'info@wwt.co');
 });
 
 test('defaults missing-origin branding to Web Wire Tech', async () => {

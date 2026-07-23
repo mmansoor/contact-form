@@ -1,3 +1,6 @@
 node_modules/
 .env.local
 .env.*.local
+donornode-handoff-summary.txt
+config/contact-form-routing-config.json
+config/*-config.json
