@@ -6,7 +6,7 @@ Read this file before changing the `contact-form` service.
 
 This repository owns the production contact-form runtime, canonical `openapi.yaml`, protected API documentation, SES template sources, deployment workflow, and monitoring configuration.
 
-`POST /api/v2/contact` is the only supported submission endpoint. The former shared-secret v1 endpoint is in a temporary `410 Gone` observation period; do not restore its business logic. Protected documentation remains available at `/contracts/<docs-secret>/openapi.yaml` and `/contracts/<docs-secret>/docs`.
+`POST /api/v2/contact` is the only supported submission endpoint. The former shared-secret v1 endpoint has no route and returns `404`; do not restore its business logic. Protected documentation remains available at `/contracts/<docs-secret>/openapi.yaml` and `/contracts/<docs-secret>/docs`.
 
 OpenAPI is the canonical public contract. Update it and its tests in the same change whenever request fields, validation, response shapes, status codes, or documentation URLs change.
 
@@ -34,7 +34,7 @@ Runtime secrets are `CONTRACT_DOCS_SECRET`, `RECAPTCHA_SECRET`, `AWS_ACCESS_KEY_
 ## Operational requirements
 
 - Preserve `/healthz` and the protected documentation routes.
-- Keep v1 tombstone logging free of the historical path secret.
+- Keep request logging for retired v1-shaped paths free of the historical path secret.
 - Alert on Cloud Run 5xx responses, repeated SES failures, repeated reCAPTCHA transport failures, and health-check failures.
 - Run `npm run validate` before deployment.
-- After the approved observation window, remove the tombstone and delete the legacy GCP secret; that final step intentionally ends v1 rollback capability.
+- Keep the deleted legacy GCP secret out of deployment configuration; restoring it would reintroduce retired v1 rollback capability.

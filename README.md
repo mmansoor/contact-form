@@ -46,7 +46,7 @@ Keep `.env.local` and inline production secrets uncommitted.
 - `GET /contracts/<docs-secret>/docs`
 - `GET /healthz`
 
-The former `/api/contact/<shared-secret>` endpoint is retired. It temporarily returns `410 Gone` during the migration observation window and will ultimately return `404` after its tombstone is removed.
+The former `/api/contact/<shared-secret>` endpoint is fully retired and returns `404`.
 
 Allowed origins, recipients, client keys, confirmation behavior, and per-site security controls come exclusively from routing configuration. See [config/contact-form-routing-config.sample.json](./config/contact-form-routing-config.sample.json) for its shape and [docs/V2-CONTACT-API.md](./docs/V2-CONTACT-API.md) for the API reference.
 

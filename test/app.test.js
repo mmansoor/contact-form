@@ -116,20 +116,15 @@ test('protected OpenAPI spec uses forwarded Cloud Run host', async () => {
 });
 
 for (const method of ['GET', 'POST', 'OPTIONS']) {
-  test(`legacy ${method} requests return 410 without logging the secret`, async () => {
+  test(`legacy ${method} requests return 404 without logging the secret`, async () => {
     const { app, logger } = buildApp();
     const response = await inject(app, {
       method,
       url: '/api/contact/legacy-secret',
       headers: { origin: 'https://wwt.co' }
     });
-    assert.equal(response.statusCode, 410);
-    assert.equal(response.headers['cache-control'], 'no-store');
-    assert.deepEqual(JSON.parse(response.body), {
-      result: false,
-      message: 'This endpoint has been retired. Use /api/v2/contact.'
-    });
-    assert.ok(logger.messages.some((entry) => entry.event === 'v1_endpoint_retired'));
+    assert.equal(response.statusCode, 404);
+    assert.ok(!logger.messages.some((entry) => entry.event === 'v1_endpoint_retired'));
     assert.ok(
       logger.messages
         .filter((entry) => Object.hasOwn(entry, 'path'))

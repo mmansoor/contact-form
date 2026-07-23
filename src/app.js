@@ -204,19 +204,6 @@ export function createApp({
     return res.status(404).send('Not found.');
   });
 
-  app.use('/api/contact', (req, res) => {
-    logEvent(logger, 'warn', 'v1_endpoint_retired', {
-      method: req.method,
-      origin: req.headers.origin || null,
-      status: 410
-    });
-    res.set('Cache-Control', 'no-store');
-    return jsonResponse(res, 410, {
-      result: false,
-      message: 'This endpoint has been retired. Use /api/v2/contact.'
-    });
-  });
-
   app.use((error, req, res, next) => {
     logEvent(logger, 'error', 'unhandled_application_error', {
       error: error.message,
