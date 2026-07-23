@@ -97,10 +97,10 @@ The sample client key `donornode-sample-client-key` hashes (SHA-256) to `1f66150
 
 ## Email flow
 
-1. **Notification email** — sent to site's `email.to` list (cc: `email.cc`). Uses SES template `contact-form-admin-notification-v2` via `Content.Template`. Template data assembled from form fields + per-site `branding` config.
+1. **Notification email** — sent to site's `email.to` list (cc: `email.cc`). Uses the optional per-site `email.from` sender, falling back to `CONTACT_FROM_EMAIL`. Uses SES template `contact-form-admin-notification-v2` via `Content.Template`. Template data assembled from form fields + per-site `branding` config.
 2. **Confirmation email** — sent to submitter only if `email.confirmation.enabled: true`. Uses SES template `contact-form-confirmation-v2`.
 
-SES sends use the verified sender `CONTACT_FROM_EMAIL` (`noreply@wwt.co`). SES templates are synced by the CI/CD pipeline on merge to `deployment`.
+CloudVantage sends use `noreply@cloudvantage.co`; sites without `email.from` use the verified `CONTACT_FROM_EMAIL` fallback (`noreply@wwt.co`). SES templates are synced by the CI/CD pipeline on merge to `deployment`.
 
 ## Test examples
 

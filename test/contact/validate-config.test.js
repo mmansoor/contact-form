@@ -61,6 +61,12 @@ test('rejects invalid email in to list', () => {
   assert.throws(() => validateRoutingConfig(cfg), /email/i);
 });
 
+test('rejects an invalid per-site sender email', () => {
+  const cfg = baseConfig();
+  cfg.sites[0].email.from = 'not-an-email';
+  assert.throws(() => validateRoutingConfig(cfg), /schema invalid/i);
+});
+
 test('rejects missing to list (schema required)', () => {
   const cfg = baseConfig();
   cfg.sites[0].email = { cc: ['x@a.example.com'] };
