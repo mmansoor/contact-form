@@ -51,8 +51,13 @@ function routingConfig() {
       {
         id: 'wwt',
         originRules: [{ type: 'exact', value: 'https://wwt.co' }],
-        email: { to: ['info@wwt.co'] },
-        formPolicy: { allowedFields: ['name', 'email', 'message'] }
+        email: {
+          to: ['info@wwt.co'],
+          confirmation: { enabled: true }
+        },
+        formPolicy: {
+          allowedFields: ['name', 'email', 'company', 'inquiry_type', 'subject', 'message']
+        }
       },
       {
         id: 'cloudvantage',
@@ -182,6 +187,26 @@ test('falls back to the global sender when a site sender is not configured', asy
 
   assert.equal(response.statusCode, 200);
   assert.equal(sent[0].fromEmail, 'noreply@example.com');
+});
+
+test('preserves WWT company and inquiry type and sends a confirmation', async () => {
+  const { app, sent } = buildApp();
+  const response = await post(
+    app,
+    {
+      ...validBody,
+      company: 'Example Co',
+      inquiry_type: 'Security and Compliance',
+      subject: 'Security review'
+    },
+    { origin: 'https://wwt.co' }
+  );
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].templateData.company, 'Example Co');
+  assert.equal(sent[0].templateData.inquiry_type, 'Security and Compliance');
+  assert.deepEqual(sent[1].to, ['jane@example.com']);
 });
 
 test('requires the per-site client key when configured', async () => {

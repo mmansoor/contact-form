@@ -263,6 +263,10 @@ components:
           type: string
         organization:
           type: string
+        company:
+          type: string
+        inquiry_type:
+          type: string
         subject:
           type: string
         message:
