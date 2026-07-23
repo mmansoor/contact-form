@@ -253,9 +253,25 @@ function buildContactTemplateData(config, payload) {
   };
 }
 
-async function defaultVerifyRecaptcha({ config, token, remoteIp, fetchImpl = globalThis.fetch }) {
+async function defaultVerifyRecaptcha({
+  config,
+  recaptchaSecret,
+  recaptchaVerifyUrl,
+  token,
+  remoteIp,
+  fetchImpl = globalThis.fetch
+}) {
+  // Support both call signatures: the V1 route passes a `config` object,
+  // while the V2 route (contact/route.js) passes recaptchaSecret and
+  // recaptchaVerifyUrl directly.
+  const secret = recaptchaSecret || (config && config.recaptchaSecret) || '';
+  const verifyUrl =
+    recaptchaVerifyUrl ||
+    (config && config.recaptchaVerifyUrl) ||
+    'https://www.google.com/recaptcha/api/siteverify';
+
   const payload = new URLSearchParams({
-    secret: config.recaptchaSecret,
+    secret,
     response: token
   });
 
@@ -263,7 +279,7 @@ async function defaultVerifyRecaptcha({ config, token, remoteIp, fetchImpl = glo
     payload.set('remoteip', remoteIp);
   }
 
-  const response = await fetchImpl(config.recaptchaVerifyUrl, {
+  const response = await fetchImpl(verifyUrl, {
     method: 'POST',
     headers: {
       'content-type': 'application/x-www-form-urlencoded'
