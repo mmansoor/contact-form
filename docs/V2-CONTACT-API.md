@@ -18,7 +18,7 @@ POST /api/v2/contact
 OPTIONS /api/v2/contact
 ```
 
-The former shared-secret endpoint is retired. During the deprecation window, requests under `/api/contact` return `410 Gone`; `/api/v2/contact` is the only supported submission endpoint.
+The former shared-secret endpoint is fully retired and returns `404`; `/api/v2/contact` is the only supported submission endpoint.
 
 ## Request
 
