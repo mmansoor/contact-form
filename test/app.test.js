@@ -91,11 +91,14 @@ async function sendJson(app, method, url, body, headers = {}) {
   });
 }
 
-test('healthz returns 200', async () => {
+test('health returns 200 without using Cloud Run reserved paths', async () => {
   const { app } = buildApp();
-  const response = await inject(app, { method: 'GET', url: '/healthz' });
+  const response = await inject(app, { method: 'GET', url: '/health' });
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), { ok: true });
+
+  const reservedPath = await inject(app, { method: 'GET', url: '/healthz' });
+  assert.equal(reservedPath.statusCode, 404);
 });
 
 test('root returns the site names', async () => {

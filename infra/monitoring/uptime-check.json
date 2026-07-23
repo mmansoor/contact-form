@@ -1,5 +1,5 @@
 {
-  "displayName": "contact-form healthz",
+  "displayName": "contact-form health",
   "monitoredResource": {
     "type": "uptime_url",
     "labels": {
@@ -8,7 +8,7 @@
     }
   },
   "httpCheck": {
-    "path": "/healthz",
+    "path": "/health",
     "port": 443,
     "useSsl": true,
     "validateSsl": true

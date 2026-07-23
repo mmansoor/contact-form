@@ -92,7 +92,7 @@ Production must alert the ops inbox for:
 - any Cloud Run `5xx` responses
 - repeated SES downstream failures
 - repeated reCAPTCHA transport failures
-- uptime failure on `GET /healthz`
+- uptime failure on `GET /health`
 
 Application logs are structured JSON. Preserve stable `event` names when possible because log-based metrics depend on them.
 

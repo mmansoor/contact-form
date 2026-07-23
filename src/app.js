@@ -384,7 +384,7 @@ export function createApp({
     res.type('text/plain').send('CloudVantage.co wwt.co');
   });
 
-  app.get(['/healthz', '/healthz/'], (req, res) => {
+  app.get(['/health', '/health/'], (req, res) => {
     res.status(200).json({ ok: true });
   });
 
