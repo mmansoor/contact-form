@@ -95,26 +95,17 @@ jobs:
           source: .
           flags: |-
             --service-account=${{ env.CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT }}
+          env_vars_update_strategy: overwrite
           env_vars: |-
             AWS_REGION=${{ env.AWS_REGION }}
             CONTACT_FROM_EMAIL=${{ vars.CONTACT_FROM_EMAIL }}
-            CONTACT_TO_EMAIL=${{ vars.CONTACT_TO_EMAIL }}
             SES_ADMIN_TEMPLATE=${{ vars.SES_ADMIN_TEMPLATE }}
             SES_CONFIRMATION_TEMPLATE=${{ vars.SES_CONFIRMATION_TEMPLATE }}
-            BRAND_COMPANY_NAME=${{ vars.BRAND_COMPANY_NAME }}
-            BRAND_SITE_NAME=${{ vars.BRAND_SITE_NAME }}
-            BRAND_DOMAIN=${{ vars.BRAND_DOMAIN }}
-            BRAND_URL=${{ vars.BRAND_URL }}
-            BRAND_SUPPORT_EMAIL=${{ vars.BRAND_SUPPORT_EMAIL }}
-            BRAND_TEAM_NAME=${{ vars.BRAND_TEAM_NAME }}
-            BRAND_PRIVACY_URL=${{ vars.BRAND_PRIVACY_URL }}
-            BRAND_TERMS_URL=${{ vars.BRAND_TERMS_URL }}
-            SERVICE_BASE_URL=${{ vars.SERVICE_BASE_URL }}
             CONTACT_FORM_CONFIG_SOURCE=${{ vars.CONTACT_FORM_CONFIG_SOURCE }}
             CONTACT_FORM_CONFIG_SECRET_NAME=${{ vars.CONTACT_FORM_CONFIG_SECRET_NAME }}
             CONTACT_FORM_CONFIG_PROJECT_ID=${{ vars.CONTACT_FORM_CONFIG_PROJECT_ID }}
+          secrets_update_strategy: overwrite
           secrets: |-
-            CONTACT_API_SECRET=CONTACT_API_SECRET:latest
             CONTRACT_DOCS_SECRET=CONTRACT_DOCS_SECRET:latest
             RECAPTCHA_SECRET=RECAPTCHA_SECRET:latest
             AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID:latest

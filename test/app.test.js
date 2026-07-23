@@ -1,95 +1,72 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { inject } from 'light-my-request';
-import { createApp, isAllowedOrigin } from '../src/app.js';
+import { createApp } from '../src/app.js';
 
 function createLogger() {
   const messages = [];
-  return {
-    messages,
-    info(message) {
-      messages.push(JSON.parse(message));
-    },
-    warn(message) {
-      messages.push(JSON.parse(message));
-    },
-    error(message) {
-      messages.push(JSON.parse(message));
-    },
-    log(message) {
-      messages.push(JSON.parse(message));
-    }
-  };
+  const capture = (message) => messages.push(JSON.parse(message));
+  return { messages, info: capture, warn: capture, error: capture, log: capture };
 }
 
 function buildEnv() {
   return {
-    CONTACT_API_SECRET: 'shared-secret',
     CONTRACT_DOCS_SECRET: 'docs-secret',
     RECAPTCHA_SECRET: 'recaptcha-secret',
     AWS_REGION: 'us-east-1',
     AWS_ACCESS_KEY_ID: 'key',
     AWS_SECRET_ACCESS_KEY: 'secret',
     CONTACT_FROM_EMAIL: 'noreply@wwt.co',
-    CONTACT_TO_EMAIL: 'info@wwt.co',
     SES_ADMIN_TEMPLATE: 'contact-form-admin-notification-v2',
-    SES_CONFIRMATION_TEMPLATE: 'contact-form-confirmation-v2',
-    BRAND_DOMAIN: 'wwt.co'
+    SES_CONFIRMATION_TEMPLATE: 'contact-form-confirmation-v2'
+  };
+}
+
+function buildRoutingConfig() {
+  return {
+    version: '2026-07-24',
+    service: 'contact-form-api',
+    defaultPolicy: {
+      allowCredentials: false,
+      allowedMethods: ['POST', 'OPTIONS'],
+      allowedHeaders: ['Content-Type'],
+      maxBodyKb: 64,
+      rateLimit: { enabled: false, windowSeconds: 60, maxRequests: 20 }
+    },
+    sites: [
+      {
+        id: 'wwt',
+        enabled: true,
+        originRules: [{ type: 'exact', value: 'https://wwt.co' }],
+        email: { to: ['info@wwt.co'], replyToFromForm: true },
+        formPolicy: {
+          requiredFields: ['name', 'email', 'message'],
+          allowedFields: ['name', 'email', 'message']
+        },
+        security: { clientKeyRequired: false, captchaRequired: false },
+        branding: { siteName: 'Web Wire Technologies' }
+      }
+    ]
   };
 }
 
 function buildApp(overrides = {}) {
   const logger = overrides.logger || createLogger();
-  const sentEmails = [];
   const app = createApp({
     env: { ...buildEnv(), ...(overrides.env || {}) },
+    routingConfig: overrides.routingConfig || buildRoutingConfig(),
     logger,
-    verifyRecaptcha: overrides.verifyRecaptcha || (async () => ({ success: true })),
-    sendTemplatedEmail:
-      overrides.sendTemplatedEmail ||
-      (async (payload) => {
-        sentEmails.push(payload);
-      })
+    sendContactEmail: async () => {}
   });
-
-  return { app, logger, sentEmails };
+  return { app, logger };
 }
 
-const validBody = {
-  name: 'Jane Doe',
-  email: 'jane@example.com',
-  message: 'Hello there',
-  'g-recaptcha-response': 'token',
-  phone: '555-555-1212',
-  company: 'Example Co',
-  inquiry_type: 'General Inquiry',
-  subject: 'Need help'
-};
-
-async function sendForm(app, method, url, body, headers = {}) {
-  const payload = new URLSearchParams(body).toString();
-  return inject(app, {
-    method,
-    url,
-    payload,
-    headers: {
-      'content-type': 'application/x-www-form-urlencoded',
-      ...headers
-    }
-  });
-}
-
-async function sendJson(app, method, url, body, headers = {}) {
-  return inject(app, {
-    method,
-    url,
-    payload: JSON.stringify(body),
-    headers: {
-      'content-type': 'application/json',
-      ...headers
-    }
-  });
-}
+test('requires v2 routing configuration', () => {
+  assert.throws(
+    () => createApp({ env: buildEnv(), routingConfig: null }),
+    /Valid v2 routing configuration is required/
+  );
+});
 
 test('healthz returns 200', async () => {
   const { app } = buildApp();
@@ -105,28 +82,6 @@ test('root returns the site names', async () => {
   assert.equal(response.body, 'CloudVantage.co wwt.co');
 });
 
-test('secret API route is required', async () => {
-  const { app, logger } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact', validBody);
-  assert.equal(response.statusCode, 404);
-  assert.equal(JSON.parse(response.body).result, false);
-  assert.match(logger.messages.find((entry) => entry.event === 'contact_secret_mismatch').event, /contact_secret_mismatch/);
-});
-
-test('GET on the secret contact route returns endpoint guidance', async () => {
-  const { app } = buildApp();
-  const response = await inject(app, {
-    method: 'GET',
-    url: '/api/contact/shared-secret'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.deepEqual(JSON.parse(response.body), {
-    result: true,
-    message: 'Contact form endpoint. Submit this route with POST.'
-  });
-});
-
 test('protected docs route is required', async () => {
   const { app } = buildApp();
   const response = await inject(app, { method: 'GET', url: '/contracts/openapi.yaml' });
@@ -138,13 +93,11 @@ test('protected OpenAPI spec uses localhost when served locally', async () => {
   const response = await inject(app, {
     method: 'GET',
     url: '/contracts/docs-secret/openapi.yaml',
-    headers: {
-      host: 'localhost:8080'
-    }
+    headers: { host: 'localhost:8080' }
   });
-
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /servers:\n  - url: http:\/\/localhost:8080\n/);
+  assert.doesNotMatch(response.body, /\/api\/contact\//);
 });
 
 test('protected OpenAPI spec uses forwarded Cloud Run host', async () => {
@@ -158,334 +111,40 @@ test('protected OpenAPI spec uses forwarded Cloud Run host', async () => {
       'x-forwarded-host': 'contact-form.wwt.co'
     }
   });
-
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /servers:\n  - url: https:\/\/contact-form\.wwt\.co\n/);
 });
 
-test('allows configured HTTPS origins and blocks others', async () => {
-  const { app } = buildApp();
-  const allowed = await inject(app, {
-    method: 'OPTIONS',
-    url: '/api/contact/shared-secret',
-    headers: {
-      origin: 'https://www.wwt.co'
-    }
-  });
-  assert.equal(allowed.statusCode, 204);
-  assert.equal(allowed.headers['access-control-allow-origin'], 'https://www.wwt.co');
-
-  const blocked = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://example.com'
-  });
-  assert.equal(blocked.statusCode, 403);
-});
-
-test('allows cloudvantage apex and subdomain origins', async () => {
-  const { app } = buildApp();
-
-  const apex = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://cloudvantage.co'
-  });
-  assert.equal(apex.statusCode, 200);
-  assert.equal(apex.headers['access-control-allow-origin'], 'https://cloudvantage.co');
-
-  const subdomain = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://www.cloudvantage.co'
-  });
-  assert.equal(subdomain.statusCode, 200);
-  assert.equal(subdomain.headers['access-control-allow-origin'], 'https://www.cloudvantage.co');
-});
-
-test('allows webwiretech apex and subdomain origins', async () => {
-  const { app } = buildApp();
-
-  const apex = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://webwiretech.com'
-  });
-  assert.equal(apex.statusCode, 200);
-  assert.equal(apex.headers['access-control-allow-origin'], 'https://webwiretech.com');
-
-  const subdomain = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://www.webwiretech.com'
-  });
-  assert.equal(subdomain.statusCode, 200);
-  assert.equal(subdomain.headers['access-control-allow-origin'], 'https://www.webwiretech.com');
-});
-
-test('validates required fields and email syntax', async () => {
-  const { app } = buildApp();
-
-  const missing = await sendForm(app, 'POST', '/api/contact/shared-secret', {
-    email: 'jane@example.com',
-    message: 'Hello',
-    'g-recaptcha-response': 'token'
-  });
-  assert.equal(missing.statusCode, 400);
-  assert.equal(JSON.parse(missing.body).message, 'Name, email, and message are required.');
-
-  const invalidEmail = await sendForm(app, 'POST', '/api/contact/shared-secret', {
-    ...validBody,
-    email: 'bad-email'
-  });
-  assert.equal(invalidEmail.statusCode, 400);
-  assert.equal(JSON.parse(invalidEmail.body).message, 'Please provide a valid email address.');
-});
-
-test('rejects missing recaptcha token', async () => {
-  const { app } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', {
-    ...validBody,
-    'g-recaptcha-response': ''
-  });
-  assert.equal(response.statusCode, 400);
-  assert.equal(JSON.parse(response.body).message, 'Please complete the reCAPTCHA challenge.');
-});
-
-test('handles recaptcha transport failure and logs it', async () => {
-  const logger = createLogger();
-  const { app } = buildApp({
-    logger,
-    verifyRecaptcha: async () => {
-      throw new Error('network down');
-    }
-  });
-
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody);
-
-  assert.equal(response.statusCode, 502);
-  assert.equal(JSON.parse(response.body).message, 'Could not verify reCAPTCHA right now. Please try again.');
-  assert.ok(logger.messages.some((entry) => entry.event === 'recaptcha_transport_failure'));
-});
-
-test('maps SES failures and logs downstream context', async () => {
-  const logger = createLogger();
-  const { app } = buildApp({
-    logger,
-    sendTemplatedEmail: async () => {
-      throw new Error('SES unavailable');
-    }
-  });
-
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody);
-
-  assert.equal(response.statusCode, 503);
-  assert.equal(
-    JSON.parse(response.body).message,
-    'Your message could not be sent right now. Please try again or email info@wwt.co.'
-  );
-  assert.ok(logger.messages.some((entry) => entry.event === 'ses_delivery_failure'));
-});
-
-test('returns success payload and sends both emails sequentially', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://wwt.co'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.deepEqual(JSON.parse(response.body), {
-    result: true,
-    message: 'Thanks. Your message has been sent successfully.'
-  });
-  assert.equal(sentEmails.length, 2);
-  assert.equal(sentEmails[0].toEmail, 'info@wwt.co');
-  assert.equal(sentEmails[1].toEmail, 'jane@example.com');
-  assert.equal(response.headers['access-control-allow-origin'], 'https://wwt.co');
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
-  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
-  assert.equal(sentEmails[0].templateData.brand_url, 'https://wwt.co');
-});
-
-test('uses CloudVantage branding for cloudvantage requests', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://cloudvantage.co'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'CloudVantage');
-  assert.equal(sentEmails[0].templateData.brand_site_name, 'CloudVantage');
-  assert.equal(sentEmails[0].templateData.brand_domain, 'cloudvantage.co');
-  assert.equal(sentEmails[0].templateData.brand_url, 'https://cloudvantage.co');
-  assert.equal(sentEmails[0].templateData.brand_support_email, 'info@cloudvantage.co');
-});
-
-test('uses Web Wire Tech branding for webwiretech requests', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://webwiretech.com'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
-  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
-  assert.equal(sentEmails[0].templateData.brand_domain, 'wwt.co');
-  assert.equal(sentEmails[0].templateData.brand_url, 'https://wwt.co');
-});
-
-test('isAllowedOrigin matches donornode origins and rejects lookalikes', () => {
-  assert.equal(isAllowedOrigin('https://donornode.cloud'), 'https://donornode.cloud');
-  assert.equal(isAllowedOrigin('https://app.donornode.cloud'), 'https://app.donornode.cloud');
-  assert.equal(isAllowedOrigin('https://dev.donornode.cloud'), 'https://dev.donornode.cloud');
-  assert.equal(isAllowedOrigin('https://demo.donornode.cloud'), 'https://demo.donornode.cloud');
-  assert.equal(isAllowedOrigin('https://donornode.com'), 'https://donornode.com');
-  assert.equal(isAllowedOrigin('https://www.donornode.cloud'), false);
-  assert.equal(isAllowedOrigin('https://app.donornode.com'), false);
-  assert.equal(isAllowedOrigin('https://donornode.evil.com'), false);
-  assert.equal(isAllowedOrigin('http://donornode.cloud'), false);
-});
-
-test('allows donornode apex, app/dev/demo subdomains, and donornode.com; blocks www', async () => {
-  const { app } = buildApp();
-
-  for (const origin of [
-    'https://donornode.cloud',
-    'https://app.donornode.cloud',
-    'https://dev.donornode.cloud',
-    'https://demo.donornode.cloud',
-    'https://donornode.com'
-  ]) {
-    const res = await inject(app, {
-      method: 'OPTIONS',
-      url: '/api/contact/shared-secret',
-      headers: { origin }
+for (const method of ['GET', 'POST', 'OPTIONS']) {
+  test(`legacy ${method} requests return 410 without logging the secret`, async () => {
+    const { app, logger } = buildApp();
+    const response = await inject(app, {
+      method,
+      url: '/api/contact/legacy-secret',
+      headers: { origin: 'https://wwt.co' }
     });
-    assert.equal(res.statusCode, 204, `${origin} should be allowed`);
-    assert.equal(res.headers['access-control-allow-origin'], origin);
-  }
-
-  for (const origin of [
-    'https://www.donornode.cloud',
-    'https://app.donornode.com',
-    'https://donornode.evil.com'
-  ]) {
-    const res = await inject(app, {
-      method: 'OPTIONS',
-      url: '/api/contact/shared-secret',
-      headers: { origin }
+    assert.equal(response.statusCode, 410);
+    assert.equal(response.headers['cache-control'], 'no-store');
+    assert.deepEqual(JSON.parse(response.body), {
+      result: false,
+      message: 'This endpoint has been retired. Use /api/v2/contact.'
     });
-    assert.equal(res.statusCode, 403, `${origin} should be blocked`);
-  }
-});
-
-test('uses DonorNode branding for donornode requests', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://donornode.cloud'
+    assert.ok(logger.messages.some((entry) => entry.event === 'v1_endpoint_retired'));
+    assert.ok(
+      logger.messages
+        .filter((entry) => Object.hasOwn(entry, 'path'))
+        .every((entry) => !entry.path.includes('legacy-secret'))
+    );
   });
+}
 
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'DonorNode');
-  assert.equal(sentEmails[0].templateData.brand_site_name, 'DonorNode');
-  assert.equal(sentEmails[0].templateData.brand_domain, 'donornode.cloud');
-  assert.equal(sentEmails[0].templateData.brand_url, 'https://donornode.cloud');
-  assert.equal(sentEmails[0].templateData.brand_support_email, 'info@donornode.cloud');
-  assert.equal(sentEmails[0].templateData.brand_team_name, 'DonorNode Team');
-});
-
-test('treats donornode.com as DonorNode for branding and recipient', async () => {
-  const { app, sentEmails } = buildApp({
-    env: { CONTACT_TO_EMAIL_DONORNODE: 'hello@donornode.cloud' }
-  });
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://donornode.com'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'DonorNode');
-  assert.equal(sentEmails[0].templateData.brand_team_name, 'DonorNode Team');
-  assert.equal(sentEmails[0].toEmail, 'hello@donornode.cloud');
-  assert.equal(sentEmails[1].toEmail, 'jane@example.com');
-});
-
-test('routes donornode admin send to per-tenant recipient when set', async () => {
-  const { app, sentEmails } = buildApp({
-    env: { CONTACT_TO_EMAIL_DONORNODE: 'hello@donornode.cloud' }
-  });
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://donornode.cloud'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].toEmail, 'hello@donornode.cloud');
-  assert.equal(sentEmails[0].templateData.admin_email, 'hello@donornode.cloud');
-  assert.equal(sentEmails[1].toEmail, 'jane@example.com');
-});
-
-test('falls back to CONTACT_TO_EMAIL when donornode recipient is unset', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://donornode.cloud'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].toEmail, 'info@wwt.co');
-  assert.equal(sentEmails[0].templateData.admin_email, 'info@wwt.co');
-});
-
-test('defaults missing-origin branding to Web Wire Tech', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody);
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(sentEmails[0].templateData.brand_company_name, 'Web Wire Technologies');
-  assert.equal(sentEmails[0].templateData.brand_site_name, 'Web Wire Tech');
-});
-
-test('allows localhost origins for local browser testing', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendForm(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'http://localhost:3000'
-  });
-
-  assert.equal(response.statusCode, 200);
-  assert.equal(response.headers['access-control-allow-origin'], 'http://localhost:3000');
-  assert.equal(sentEmails.length, 2);
-});
-
-test('supports multipart form-data submissions', async () => {
+test('v2 remains mounted', async () => {
   const { app } = buildApp();
-  const boundary = '----contact-form-boundary';
-  const multipartBody = [
-    `--${boundary}`,
-    'Content-Disposition: form-data; name="name"',
-    '',
-    'Jane Doe',
-    `--${boundary}`,
-    'Content-Disposition: form-data; name="email"',
-    '',
-    'jane@example.com',
-    `--${boundary}`,
-    'Content-Disposition: form-data; name="message"',
-    '',
-    'Hello there',
-    `--${boundary}`,
-    'Content-Disposition: form-data; name="g-recaptcha-response"',
-    '',
-    'token',
-    `--${boundary}--`,
-    ''
-  ].join('\r\n');
   const response = await inject(app, {
-    method: 'POST',
-    url: '/api/contact/shared-secret',
-    payload: multipartBody,
-    headers: {
-      'content-type': `multipart/form-data; boundary=${boundary}`
-    }
+    method: 'OPTIONS',
+    url: '/api/v2/contact',
+    headers: { origin: 'https://wwt.co' }
   });
-  assert.equal(response.statusCode, 200);
-});
-
-test('supports JSON submissions', async () => {
-  const { app, sentEmails } = buildApp();
-  const response = await sendJson(app, 'POST', '/api/contact/shared-secret', validBody, {
-    origin: 'https://wwt.co'
-  });
-
-  assert.equal(response.statusCode, 200);
+  assert.equal(response.statusCode, 204);
   assert.equal(response.headers['access-control-allow-origin'], 'https://wwt.co');
-  assert.equal(sentEmails.length, 2);
-  assert.equal(sentEmails[0].templateData.email, 'jane@example.com');
 });
