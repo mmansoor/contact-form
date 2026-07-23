@@ -4,7 +4,7 @@
   "defaultPolicy": {
     "allowCredentials": false,
     "allowedMethods": ["POST", "OPTIONS"],
-    "allowedHeaders": ["Content-Type", "Authorization", "X-Request-Id"],
+    "allowedHeaders": ["Content-Type", "Authorization", "X-Request-Id", "X-Contact-Client-Key"],
     "maxBodyKb": 64,
     "rateLimit": {
       "enabled": true,

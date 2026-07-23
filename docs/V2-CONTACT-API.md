@@ -90,7 +90,7 @@ The sample client key `donornode-sample-client-key` hashes (SHA-256) to `1f66150
 
 - `OPTIONS` preflight from an allowed origin returns `204` with `Access-Control-Allow-Origin` echoing the matched origin (never `*`).
 - `Access-Control-Allow-Methods: POST, OPTIONS`
-- `Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-Id`
+- `Access-Control-Allow-Headers: Content-Type, Authorization, X-Request-Id, X-Contact-Client-Key`
 - `Access-Control-Max-Age: 600`
 - `Vary: Origin`
 - Credentials: off by default (`allowCredentials: false` in config).
