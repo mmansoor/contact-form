@@ -44,6 +44,7 @@ The legacy endpoint (`POST /api/contact/<secret>`) still exists and is untouched
 | `message` | Yes | string | Max length from site config (`maxMessageLength`, default 5000). |
 | `phone` | No | string | |
 | `organization` / `company` | No | string | Field name depends on site's `allowedFields`. |
+| `inquiry_type` | No | string | Accepted by WWT and included in notification template data. |
 | `subject` | No | string | |
 | `g-recaptcha-response` | Conditional | string | Required when `captchaRequired: true` (default). |
 | honeypot fields (e.g. `company_website`) | No | string | If present and non-empty, request is silently accepted (200) but no email is sent. |
@@ -54,7 +55,7 @@ Only fields listed in the site's `allowedFields` are accepted; unknown fields re
 
 | Site | Allowed origins | Client key | Captcha | Recipients | Confirmation |
 |---|---|---|---|---|---|
-| **wwt** | `https://wwt.co`, `https://www.wwt.co` | Not required | Required | `info@wwt.co` | Disabled |
+| **wwt** | `https://wwt.co`, `https://www.wwt.co` | Not required | Required | `info@wwt.co` | Enabled |
 | **cloudvantage** | `https://cloudvantage.co`, `https://www.cloudvantage.co` | Not required | Required | `info@cloudvantage.co` | Disabled |
 | **donornode** | `https://donornode.com`, `https://www.donornode.com`, `^https://(dev\|demo\|app)\.donornode\.cloud$` | Required (`X-Contact-Client-Key`) | Required | `contact@donornode.com`, `support@donornode.com` (cc: `admin@donornode.com`) | Enabled |
 
