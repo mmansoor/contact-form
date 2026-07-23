@@ -65,10 +65,11 @@ export async function routeContactEmails({
 }) {
   const templateData = buildTemplateData({ site, payload });
   const replyTo = site.email.replyToFromForm && payload.email ? [payload.email] : [];
+  const senderAddress = site.email.from || fromEmail;
 
   await sendEmail({
     sesClient,
-    fromEmail,
+    fromEmail: senderAddress,
     to: site.email.to,
     cc: site.email.cc,
     replyTo,
@@ -82,7 +83,7 @@ export async function routeContactEmails({
 
     await sendEmail({
       sesClient,
-      fromEmail,
+      fromEmail: senderAddress,
       to: [payload.email],
       replyTo: [supportAddress],
       templateName: site.email.confirmationTemplate || confirmationTemplate,

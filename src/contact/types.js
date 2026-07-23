@@ -33,6 +33,7 @@
 
 /**
  * @typedef {Object} EmailPolicy
+ * @property {string} [from]
  * @property {string[]} to
  * @property {string[]} cc
  * @property {boolean} replyToFromForm

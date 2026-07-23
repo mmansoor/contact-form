@@ -63,6 +63,7 @@ export const routingConfigSchema = {
             required: ['to'],
             additionalProperties: false,
             properties: {
+              from: { type: 'string', format: 'email' },
               to: {
                 type: 'array',
                 minItems: 1,

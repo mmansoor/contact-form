@@ -53,6 +53,12 @@ function routingConfig() {
         originRules: [{ type: 'exact', value: 'https://wwt.co' }],
         email: { to: ['info@wwt.co'] },
         formPolicy: { allowedFields: ['name', 'email', 'message'] }
+      },
+      {
+        id: 'cloudvantage',
+        originRules: [{ type: 'exact', value: 'https://cloudvantage.co' }],
+        email: { from: 'noreply@cloudvantage.co', to: ['info@cloudvantage.co'] },
+        formPolicy: { allowedFields: ['name', 'email', 'message'] }
       }
     ]
   });
@@ -159,6 +165,23 @@ test('allows a regex origin', async () => {
   });
   assert.equal(response.statusCode, 200);
   assert.equal(sent.length, 2);
+});
+
+test('uses a per-site sender address when configured', async () => {
+  const { app, sent } = buildApp();
+  const response = await post(app, validBody, { origin: 'https://cloudvantage.co' });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sent[0].fromEmail, 'noreply@cloudvantage.co');
+  assert.deepEqual(sent[0].to, ['info@cloudvantage.co']);
+});
+
+test('falls back to the global sender when a site sender is not configured', async () => {
+  const { app, sent } = buildApp();
+  const response = await post(app, validBody, { origin: 'https://wwt.co' });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sent[0].fromEmail, 'noreply@example.com');
 });
 
 test('requires the per-site client key when configured', async () => {

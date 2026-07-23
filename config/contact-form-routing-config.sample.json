@@ -95,6 +95,7 @@
         { "type": "exact", "value": "https://www.cloudvantage.co" }
       ],
       "email": {
+        "from": "noreply@cloudvantage.co",
         "to": ["info@cloudvantage.co"],
         "replyToFromForm": true
       },
