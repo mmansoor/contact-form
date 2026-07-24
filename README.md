@@ -73,7 +73,7 @@ The repo includes a GitHub Actions workflow for the `deployment` branch that val
 - `OPTIONS /api/contact/<shared-secret>`
 - `GET /contracts/<docs-secret>/openapi.yaml`
 - `GET /contracts/<docs-secret>/docs`
-- `GET /healthz`
+- `GET /health`
 
 ### Configurable v2 (opt-in, config-driven routing)
 

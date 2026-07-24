@@ -7,7 +7,10 @@ This directory holds the first-pass production monitoring configuration for the 
 - Cloud Run request `5xx` responses
 - repeated `ses_delivery_failure` log events
 - repeated `recaptcha_transport_failure` log events
-- uptime failure on `GET /healthz`
+- uptime failure on `GET /health`
+
+Cloud Run reserves exact URL paths ending in `z`, so do not rename this probe to
+`/healthz`; Google Frontend intercepts that path before it reaches Express.
 
 ## Rollout assumptions
 
