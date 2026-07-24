@@ -77,7 +77,7 @@
       "combiner": "OR",
       "conditions": [
         {
-          "displayName": "healthz uptime failed",
+          "displayName": "health uptime failed",
           "conditionThreshold": {
             "filter": "metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" AND metric.labels.check_id=\"${UPTIME_CHECK_ID}\"",
             "comparison": "COMPARISON_LT",
