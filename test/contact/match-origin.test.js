@@ -11,7 +11,6 @@ function buildConfig() {
         id: 'donornode',
         originRules: [
           { type: 'exact', value: 'https://donornode.com' },
-          { type: 'exact', value: 'https://www.donornode.com' },
           { type: 'regex', value: '^https://(dev|demo|app)\\.donornode\\.cloud$' }
         ],
         email: { to: ['contact@donornode.com'] }
@@ -25,10 +24,10 @@ function buildConfig() {
   });
 }
 
-test('matches exact apex and www origins', () => {
+test('matches configured apex origins and rejects DonorNode www', () => {
   const cfg = buildConfig();
   assert.equal(matchSiteByOrigin(cfg, 'https://donornode.com').id, 'donornode');
-  assert.equal(matchSiteByOrigin(cfg, 'https://www.donornode.com').id, 'donornode');
+  assert.equal(matchSiteByOrigin(cfg, 'https://www.donornode.com'), null);
   assert.equal(matchSiteByOrigin(cfg, 'https://wwt.co').id, 'wwt');
 });
 
