@@ -19,7 +19,6 @@
       "description": "DonorNode public, dev, demo, and app contact forms",
       "originRules": [
         { "type": "exact", "value": "https://donornode.com" },
-        { "type": "exact", "value": "https://www.donornode.com" },
         { "type": "regex", "value": "^https://(dev|demo|app)\\.donornode\\.cloud$" }
       ],
       "email": {
