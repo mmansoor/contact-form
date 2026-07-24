@@ -57,7 +57,7 @@ Only fields listed in the site's `allowedFields` are accepted; unknown fields re
 |---|---|---|---|---|---|
 | **wwt** | `https://wwt.co`, `https://www.wwt.co` | Not required | Required | `info@wwt.co` | Enabled |
 | **cloudvantage** | `https://cloudvantage.co`, `https://www.cloudvantage.co` | Not required | Required | `info@cloudvantage.co` | Disabled |
-| **donornode** | `https://donornode.com`, `https://www.donornode.com`, `^https://(dev\|demo\|app)\.donornode\.cloud$` | Required (`X-Contact-Client-Key`) | Required | `contact@donornode.com`, `support@donornode.com` (cc: `admin@donornode.com`) | Enabled |
+| **donornode** | `https://donornode.com`, `^https://(dev\|demo\|app)\.donornode\.cloud$` | Required (`X-Contact-Client-Key`) | Required | `contact@donornode.com`, `support@donornode.com` (cc: `admin@donornode.com`) | Enabled |
 
 ### DonorNode client key
 

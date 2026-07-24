@@ -30,7 +30,7 @@ Use only the row matching the website being changed:
 |---|---|---|---|
 | Web Wire Technologies | `https://wwt.co` or `https://www.wwt.co` | `phone`, `company`, `inquiry_type`, `subject` | Not required |
 | CloudVantage | `https://cloudvantage.co` or `https://www.cloudvantage.co` | `phone`, `company`, `subject` | Not required |
-| DonorNode | `https://donornode.com`, `https://www.donornode.com`, or `https://dev.donornode.cloud`, `https://demo.donornode.cloud`, `https://app.donornode.cloud` | `phone`, `organization`, `subject` | Required |
+| DonorNode | `https://donornode.com`, or `https://dev.donornode.cloud`, `https://demo.donornode.cloud`, `https://app.donornode.cloud` | `phone`, `organization`, `subject` | Required |
 
 The API determines the site and email recipients from the browser-provided `Origin` header. Frontend JavaScript must not try to set `Origin`; browsers set this forbidden header automatically. Production requests from an origin absent from the table will receive HTTP `403`.
 
